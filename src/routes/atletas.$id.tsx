@@ -84,16 +84,14 @@ function AthleteDetail() {
   const weekly = useMemo(() => {
     const CHALLENGE_START = "2026-04-01"; // quarta-feira
     const daysWithCheckIn = new Set<string>();
-    let maxKey = "";
     for (const c of check_ins) {
       if (!c.is_valid) continue;
-      const k = spDateKey(c.occurred_at);
-      daysWithCheckIn.add(k);
-      if (k > maxKey) maxKey = k;
+      daysWithCheckIn.add(spDateKey(c.occurred_at));
     }
     const todayKey = spDateKey(new Date().toISOString());
-    // Limite = menor entre hoje e último check-in importado (não passa de hoje)
-    const cutoffKey = maxKey && maxKey < todayKey ? maxKey : todayKey;
+    // Cutoff global: último check-in de QUALQUER atleta no dataset importado.
+    const globalMaxKey = dataset_max_occurred_at ? spDateKey(dataset_max_occurred_at) : "";
+    const cutoffKey = globalMaxKey && globalMaxKey < todayKey ? globalMaxKey : todayKey;
 
     const fmtDay = (d: Date) =>
       `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
