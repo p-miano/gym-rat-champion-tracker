@@ -6,36 +6,22 @@ const POOL: Record<string, string[]> = {
     "Cumpre a meta com a precisão de um boleto vencendo na sexta.",
     "Calcula 3 treinos por semana como quem racha conta no aniversário.",
   ],
-  calendar_cheater: [
-    "Foi 5 dias seguidos pra compensar 2 semanas no sofá. Espertinho.",
-    "Treinou tudo numa semana só pra fingir que tem rotina.",
-    "Faz blitz na academia quando lembra que existe um grupo cobrando.",
+  bodybuilding_beast: [
+    "Cheira a anilha e suor. Não cumprimenta sem fazer rosca.",
+    "Marombeiro raiz. Espelho da academia já tem foto sua emoldurada.",
+    "Vive em ciclo eterno de supino, perna e mais supino.",
   ],
-  dorflex_sponsor: [
-    "Já pode deixar o PIX de R$20 programado no débito automático.",
-    "Patrocinador oficial do Dorflex. Logo na camisa em breve.",
-    "Lanterna da rodada. De novo. Surpreendentemente previsível.",
+  cardio_king: [
+    "Coração igual locomotiva. Cardiologista pediu pra você maneirar.",
+    "Esteira, bike, escada... só falta correr pelado pra completar.",
+    "Suor escorrendo igual chuveiro. Inimigo declarado do descanso.",
   ],
-  flexible_iron: [
-    "Veio pra puxar ferro e ficou abraçando o rolo de espuma.",
-    "Maromba só de nome — na prática é alongamento com playlist do Spotify.",
-    "Pilateiro federado. Respeita o core.",
+  nature_lover: [
+    "Trocou o ar-condicionado por mosquito. Hippie fitness.",
+    "Treina onde tem mato, sol e poeira. Academia indoor que se cuide.",
+    "Foto de treino com paisagem. Influencer de parquinho.",
   ],
-  no_borders: [
-    "Treina em qualquer CEP. Nômade fitness, vagabundo do whey.",
-    "Bate ponto em academia que nem sabia que existia.",
-    "Geolocalização do treino parece itinerário de companhia aérea.",
-  ],
-  wod_comedian: [
-    "Vira piada virou métrica. Parabéns, comediante de WOD.",
-    "O grupo ri mais do treino do que do seu progresso.",
-    "Mais 😂 que 🔥. Você é a atração principal do circo.",
-  ],
-  hypochondriac: [
-    "Sinusite, laringite, virose, dor no cotovelo... e ainda treina. Lenda.",
-    "Reclama de tudo e aparece em todas. Verdadeiro sobrevivente.",
-    "Bula do Dorflex deveria ter sua foto.",
-  ],
+
   mile_eater: [
     "Engole quilômetro como se fosse pão de queijo.",
     "Já podia ter ido pra Bahia a pé.",
