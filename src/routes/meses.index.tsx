@@ -52,7 +52,7 @@ function MonthsPage() {
                       ))
                     )}
                   </Row>
-                  <Row icon={<Skull className="h-4 w-4 text-destructive" />} label="Cliente Ouro">
+                  <Row icon={<Skull className="h-4 w-4 text-destructive" />} label="Lanterna">
                     {m.lasts.length === 0 ? (
                       <span className="text-muted-foreground">—</span>
                     ) : (
