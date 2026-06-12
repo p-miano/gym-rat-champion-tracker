@@ -418,10 +418,10 @@ function AthleteDetail() {
         <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
         <p className="mb-3 text-xs text-muted-foreground">
           A unidade de medida é o <strong>Dia Ativo</strong>: vários check-ins no mesmo dia viram 1
-          sessão. Cada dia conta UMA categoria — somamos a duração de musculação, cardio e mobilidade
-          das sub-atividades do dia; vence a maior. Empate com musculação vai pra musculação;
-          empate cardio vs mobilidade vai pra cardio.
-          Musculação + Cardio + Mobilidade + Outros = Dias Ativos.
+          sessão. Cada dia conta UMA categoria — somamos a duração das sub-atividades por bucket
+          (musculação, cardio, mobilidade, outros esportes); vence a maior. Em empates a ordem é
+          musculação → cardio → outros esportes → mobilidade.
+          Musculação + Cardio + Mobilidade + Outros Esportes + Outros = Dias Ativos.
         </p>
         <div className="overflow-hidden rounded-xl border border-border">
           <AuditRow
@@ -450,9 +450,15 @@ function AthleteDetail() {
             value={audit.mobility}
           />
           <AuditRow
+            icon={<Activity className="h-4 w-4 text-primary" />}
+            label="Treinos de Outros Esportes"
+            sub="surf, escalada, futebol, lutas etc."
+            value={audit.sport}
+          />
+          <AuditRow
             icon={<Activity className="h-4 w-4 text-muted-foreground" />}
             label="Treinos sem categoria"
-            sub="não bate em musculação, cardio nem mobilidade"
+            sub="não bate em nenhum bucket conhecido"
             value={audit.other}
           />
           <AuditRow
