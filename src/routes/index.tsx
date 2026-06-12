@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Skull, Coins, CalendarDays, Flame } from "lucide-react";
+import { Trophy, Skull, Coins, CalendarDays, Flame, Award } from "lucide-react";
 import { getAnnualStanding, listMonths } from "@/lib/data.functions";
+import { AWARD_META } from "@/lib/jokes";
 
 const YEAR = new Date().getFullYear();
 const SEASON_LABEL = "2026 / 2027";
