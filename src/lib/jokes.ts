@@ -71,20 +71,20 @@ export const AWARD_META: Record<
     title: "No Limite do Voucher",
     short: "Cumpre a meta cirurgicamente, nem um treino a mais.",
   },
-  calendar_cheater: {
-    emoji: "🃏",
-    title: "Burleiro de Calendário",
-    short: "Concentra treinos pra compensar semana de preguiça.",
+  bodybuilding_beast: {
+    emoji: "💪",
+    title: "Marombeiro",
+    short: "Mais treinos de musculação / força no ano.",
   },
-  dorflex_sponsor: {
-    emoji: "💸",
-    title: "Patrocinador Oficial do Dorflex",
-    short: "Mais vezes na lanterna mensal. PIX programado.",
+  cardio_king: {
+    emoji: "🫀",
+    title: "Inimigo do Cardiologista",
+    short: "Mais treinos de cardio no ano.",
   },
-  flexible_iron: {
-    emoji: "🧘‍♂️",
-    title: "Maromba Flexível / Pilateiro de Respeito",
-    short: "Pilates / LPO em alta frequência.",
+  nature_lover: {
+    emoji: "🌿",
+    title: "Amante da Natureza",
+    short: "Mais treinos ao ar livre no ano.",
   },
   no_borders: {
     emoji: "✈️",
