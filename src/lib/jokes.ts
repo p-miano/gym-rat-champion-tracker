@@ -6,20 +6,20 @@ const POOL: Record<string, string[]> = {
     "Cumpre a meta com a precisão de um boleto vencendo na sexta.",
     "Calcula 3 treinos por semana como quem racha conta no aniversário.",
   ],
-  calendar_cheater: [
-    "Foi 5 dias seguidos pra compensar 2 semanas no sofá. Espertinho.",
-    "Treinou tudo numa semana só pra fingir que tem rotina.",
-    "Faz blitz na academia quando lembra que existe um grupo cobrando.",
+  bodybuilding_beast: [
+    "Cheira a anilha e suor. Não cumprimenta sem fazer rosca.",
+    "Marombeiro raiz. Espelho da academia já tem foto sua emoldurada.",
+    "Vive em ciclo eterno de supino, perna e mais supino.",
   ],
-  dorflex_sponsor: [
-    "Já pode deixar o PIX de R$20 programado no débito automático.",
-    "Patrocinador oficial do Dorflex. Logo na camisa em breve.",
-    "Lanterna da rodada. De novo. Surpreendentemente previsível.",
+  cardio_king: [
+    "Coração igual locomotiva. Cardiologista pediu pra você maneirar.",
+    "Esteira, bike, escada... só falta correr pelado pra completar.",
+    "Suor escorrendo igual chuveiro. Inimigo declarado do descanso.",
   ],
-  flexible_iron: [
-    "Veio pra puxar ferro e ficou abraçando o rolo de espuma.",
-    "Maromba só de nome — na prática é alongamento com playlist do Spotify.",
-    "Pilateiro federado. Respeita o core.",
+  nature_lover: [
+    "Trocou o ar-condicionado por mosquito. Hippie fitness.",
+    "Treina onde tem mato, sol e poeira. Academia indoor que se cuide.",
+    "Foto de treino com paisagem. Influencer de parquinho.",
   ],
   no_borders: [
     "Treina em qualquer CEP. Nômade fitness, vagabundo do whey.",
@@ -31,11 +31,8 @@ const POOL: Record<string, string[]> = {
     "O grupo ri mais do treino do que do seu progresso.",
     "Mais 😂 que 🔥. Você é a atração principal do circo.",
   ],
-  hypochondriac: [
-    "Sinusite, laringite, virose, dor no cotovelo... e ainda treina. Lenda.",
-    "Reclama de tudo e aparece em todas. Verdadeiro sobrevivente.",
-    "Bula do Dorflex deveria ter sua foto.",
-  ],
+
+
   mile_eater: [
     "Engole quilômetro como se fosse pão de queijo.",
     "Já podia ter ido pra Bahia a pé.",
@@ -74,20 +71,20 @@ export const AWARD_META: Record<
     title: "No Limite do Voucher",
     short: "Cumpre a meta cirurgicamente, nem um treino a mais.",
   },
-  calendar_cheater: {
-    emoji: "🃏",
-    title: "Burleiro de Calendário",
-    short: "Concentra treinos pra compensar semana de preguiça.",
+  bodybuilding_beast: {
+    emoji: "💪",
+    title: "Marombeiro",
+    short: "Mais treinos de musculação / força no ano.",
   },
-  dorflex_sponsor: {
-    emoji: "💸",
-    title: "Patrocinador Oficial do Dorflex",
-    short: "Mais vezes na lanterna mensal. PIX programado.",
+  cardio_king: {
+    emoji: "🫀",
+    title: "Inimigo do Cardiologista",
+    short: "Mais treinos de cardio no ano.",
   },
-  flexible_iron: {
-    emoji: "🧘‍♂️",
-    title: "Maromba Flexível / Pilateiro de Respeito",
-    short: "Pilates / LPO em alta frequência.",
+  nature_lover: {
+    emoji: "🌿",
+    title: "Amante da Natureza",
+    short: "Mais treinos ao ar livre no ano.",
   },
   no_borders: {
     emoji: "✈️",
@@ -98,11 +95,6 @@ export const AWARD_META: Record<
     emoji: "😂",
     title: "Humorista do WOD",
     short: "Mais reações de risada nos treinos.",
-  },
-  hypochondriac: {
-    emoji: "🩺",
-    title: "Hipocondríaco / Sobrevivente",
-    short: "Sinusite, virose, dorflex... e ainda treina.",
   },
   mile_eater: {
     emoji: "🏃‍♀️",
@@ -129,12 +121,11 @@ export const AWARD_META: Record<
 // Rótulos PT-BR para as chaves de `details` salvas em annual_awards.
 export const DETAIL_LABELS: Record<string, { singular: string; plural: string }> = {
   weeks_at_three: { singular: "semana no limite", plural: "semanas no limite" },
-  compressed_weeks: { singular: "semana comprimida", plural: "semanas comprimidas" },
-  times_last: { singular: "vez na lanterna", plural: "vezes na lanterna" },
-  matches: { singular: "treino flexível", plural: "treinos flexíveis" },
+  strength_checkins: { singular: "treino de força", plural: "treinos de força" },
+  cardio_checkins: { singular: "treino de cardio", plural: "treinos de cardio" },
+  outdoor_checkins: { singular: "treino ao ar livre", plural: "treinos ao ar livre" },
   far_checkins: { singular: "treino viajando", plural: "treinos viajando" },
   laughs: { singular: "risada", plural: "risadas" },
-  complaints: { singular: "lamento", plural: "lamentos" },
   total_km: { singular: "km", plural: "km" },
   comebacks: { singular: "ressurreição", plural: "ressurreições" },
   early_checkins: { singular: "treino antes das 7h", plural: "treinos antes das 7h" },

@@ -189,19 +189,11 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   const { data: checkIns } = await admin
     .from("check_ins")
     .select(
-      "athlete_id, occurred_at, is_valid, distance_km, activity_type, title, description, location_latitude, location_longitude, reactions",
+      "athlete_id, occurred_at, is_valid, distance_km, duration_min, activity_type, title, description, location_latitude, location_longitude, reactions, raw",
     )
     .in("month_id", monthIds);
-  const { data: monthLasts } = await admin
-    .from("month_results")
-    .select("athlete_id, is_last, month_id")
-    .in("month_id", monthIds)
-    .eq("is_last", true);
 
-  const awards = computeAwards(
-    (checkIns ?? []) as AwardCheckIn[],
-    (monthLasts ?? []).map((m: any) => ({ athlete_id: m.athlete_id, is_last: true })),
-  );
+  const awards = computeAwards((checkIns ?? []) as AwardCheckIn[]);
   await admin.from("annual_awards").delete().eq("year", year);
   const rows = awards
     .filter((a) => a.athlete_id)

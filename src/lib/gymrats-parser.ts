@@ -116,6 +116,78 @@ function isRunningOrWalking(activityType: string | null, title: string | null): 
   );
 }
 
+// --- Classificadores reaproveitáveis (parser + engine de prêmios) ---
+
+export interface ClassifyInput {
+  activity_type: string | null;
+  title: string | null;
+  description: string | null;
+  platform_activities: string[];
+}
+
+export function extractPlatformActivities(raw: unknown): string[] {
+  const r = raw as GymRatsCheckIn | null | undefined;
+  const arr = r?.check_in_activities;
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((a) => (a?.platform_activity ?? "").toString().toLowerCase())
+    .filter((s) => s.length > 0);
+}
+
+const CARDIO_NATIVE = new Set([
+  "running",
+  "walking",
+  "treadmill",
+  "cycling",
+  "swimming",
+]);
+const CARDIO_PLATFORM_RE = /treadmill|running|elliptical/;
+const CARDIO_TEXT_RE =
+  /\b(corrid(?:a|inha)?|esteira|caminhad(?:a|inha)?|caminhar|cardio(?:zinho)?|pedal(?:ada)?|escada|el[ií]ptico)\b/;
+
+export function isCardio(c: ClassifyInput): boolean {
+  const t = (c.activity_type ?? "").toLowerCase();
+  if (CARDIO_NATIVE.has(t)) return true;
+  if (c.platform_activities.some((p) => CARDIO_PLATFORM_RE.test(p))) return true;
+  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
+  return CARDIO_TEXT_RE.test(blob);
+}
+
+const INDOOR_TYPES = new Set(["treadmill", "indoor_cycling", "elliptical"]);
+const OUTDOOR_TYPES = new Set([
+  "running",
+  "walking",
+  "cycling",
+  "hiking",
+  "surfing",
+]);
+const OUTDOOR_TEXT_RE =
+  /\b(parque|praç[ao]|praia|trilha|mato|ar livre|natureza|debaixo de sol|chuva)\b/;
+
+export function isOutdoor(c: ClassifyInput): boolean {
+  const t = (c.activity_type ?? "").toLowerCase();
+  if (INDOOR_TYPES.has(t)) return false;
+  if (OUTDOOR_TYPES.has(t)) return true;
+  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
+  return OUTDOOR_TEXT_RE.test(blob);
+}
+
+const STRENGTH_TYPES = new Set([
+  "weightlifting",
+  "strength_training",
+  "strength",
+  "lpo",
+]);
+const STRENGTH_TEXT_RE =
+  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|perna)\b/;
+
+export function isStrength(c: ClassifyInput): boolean {
+  const t = (c.activity_type ?? "").toLowerCase();
+  if (STRENGTH_TYPES.has(t)) return true;
+  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
+  return STRENGTH_TEXT_RE.test(blob);
+}
+
 export function validateCheckIn(_c: {
   has_photo: boolean;
   duration_min: number | null;
