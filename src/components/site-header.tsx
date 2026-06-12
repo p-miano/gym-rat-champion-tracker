@@ -28,9 +28,12 @@ export function SiteHeader() {
           <div className="leading-tight">
             <div className="display text-lg text-lime">Atletas com Dorflex</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              placar anual · 2026
+              placar · temporada 2026 / 2027
             </div>
           </div>
+        </Link>
+        <nav className="hidden items-center gap-1 md:flex">
+          <NavLink to="/">Placar Geral</NavLink>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink to="/">Hall da Fama</NavLink>
