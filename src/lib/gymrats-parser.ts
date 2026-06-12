@@ -146,10 +146,13 @@ const CARDIO_NATIVE = new Set([
   "stair_climber",
   "hiit",
   "dance",
+  "circuit_training",
+  "functional_training",
+  "cross_training",
 ]);
-const CARDIO_PLATFORM_RE = /treadmill|running|elliptical|stationary_bike|spinning|rowing|stair|hiit|dance/;
+const CARDIO_PLATFORM_RE = /treadmill|running|elliptical|stationary_bike|spinning|rowing|stair|hiit|dance|circuit|functional_training|cross_training/;
 const CARDIO_TEXT_RE =
-  /\b(corrid(?:a|inha)?|esteira|caminhad(?:a|inha)?|caminhar|cardio(?:zinho)?|pedal(?:ada)?|escada|el[ií]ptico|bike|bicicleta|spinning|ergom[eé]trica|trote|transport|remo|dance|dan[cç]a|hiit)\b/;
+  /\b(corrid(?:a|inha)?|esteira|caminhad(?:a|inha)?|caminhar|cardio(?:zinho)?|pedal(?:ada)?|escada|el[ií]ptico|bike|bicicleta|spinning|ergom[eé]trica|trote|transport|remo|dance|dan[cç]a|hiit|funcional|circuito|wod|crossfit)\b/;
 
 export function isCardio(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
@@ -188,6 +191,7 @@ export function isOutdoor(c: ClassifyInput): boolean {
 
 const STRENGTH_TYPES = new Set([
   "weightlifting",
+  "weight_lifting",
   "strength_training",
   "strength",
   "lpo",
@@ -195,7 +199,7 @@ const STRENGTH_TYPES = new Set([
   "functional_strength",
 ]);
 const STRENGTH_TEXT_RE =
-  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|agachament|levantament|peito|costas|ombro|b[ií]ceps|tr[ií]ceps|gl[uú]teo|perna)\b/;
+  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|agachament|levantament|peito|costas|ombro|b[ií]ceps|tr[ií]ceps|gl[uú]teo|perna|lpo)\b/;
 
 export function isStrength(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
@@ -223,9 +227,42 @@ export function isMobility(c: ClassifyInput): boolean {
   return MOBILITY_TEXT_RE.test(blob);
 }
 
-// Classificação exclusiva por check-in/dia: strength × cardio × mobility × other.
+const SPORT_TYPES = new Set([
+  "surfing",
+  "skating",
+  "skateboarding",
+  "snowboarding",
+  "climbing",
+  "soccer",
+  "basketball",
+  "volleyball",
+  "tennis",
+  "badminton",
+  "martial_arts",
+  "boxing",
+  "kickboxing",
+  "jiu_jitsu",
+  "judo",
+  "karate",
+  "taekwondo",
+  "mma",
+  "golf",
+  "baseball",
+]);
+const SPORT_TEXT_RE =
+  /\b(surf|skate|escalad|boulder|futebol|basquete|v[oô]lei|t[eê]nis|bad?minton|boxe|muay|jiu[\s-]?jitsu|jud[oô]|karat[eê]|taekwondo|mma|luta)\b/;
+
+export function isSport(c: ClassifyInput): boolean {
+  const t = (c.activity_type ?? "").toLowerCase();
+  if (SPORT_TYPES.has(t)) return true;
+  if (c.platform_activities.some((p) => SPORT_TYPES.has(p))) return true;
+  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
+  return SPORT_TEXT_RE.test(blob);
+}
+
+// Classificação exclusiva por check-in/dia.
 // Soma duração das sub-atividades por categoria; vence a maior.
-// Empate com strength → strength (carga vence ADM). Empate cardio vs mobility → cardio.
+// Empates: strength > cardio > sport > mobility.
 const CARDIO_PLATFORMS = new Set([
   "treadmill",
   "running",
@@ -243,6 +280,9 @@ const CARDIO_PLATFORMS = new Set([
   "stair_climber",
   "hiit",
   "dance",
+  "circuit_training",
+  "functional_training",
+  "cross_training",
 ]);
 const STRENGTH_PLATFORMS = new Set([
   "strength_training",
@@ -260,8 +300,14 @@ const MOBILITY_PLATFORMS = new Set([
   "mind_and_body",
   "mobility",
 ]);
+const SPORT_PLATFORMS = SPORT_TYPES;
 
-export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "other";
+export type ExclusiveCategory =
+  | "strength"
+  | "cardio"
+  | "mobility"
+  | "sport"
+  | "other";
 
 export interface ExclusiveClassifyInput {
   activity_type: string | null;
@@ -288,33 +334,41 @@ export function classifyCheckInExclusive(
   };
   const fbStrength = isStrength(fallbackInput);
   const fbCardio = !fbStrength && isCardio(fallbackInput);
-  const fbMobility = !fbStrength && !fbCardio && isMobility(fallbackInput);
+  const fbSport = !fbStrength && !fbCardio && isSport(fallbackInput);
+  const fbMobility = !fbStrength && !fbCardio && !fbSport && isMobility(fallbackInput);
 
   let strengthMs = 0;
   let cardioMs = 0;
   let mobilityMs = 0;
+  let sportMs = 0;
   for (const s of subs) {
     const p = (s.platform_activity ?? "").toString().toLowerCase();
     const ms = Number(s.duration_millis ?? 0) || 0;
     if (ms <= 0) continue;
     if (STRENGTH_PLATFORMS.has(p)) strengthMs += ms;
     else if (CARDIO_PLATFORMS.has(p)) cardioMs += ms;
+    else if (SPORT_PLATFORMS.has(p)) sportMs += ms;
     else if (MOBILITY_PLATFORMS.has(p)) mobilityMs += ms;
     else {
       if (fbStrength) strengthMs += ms;
       else if (fbCardio) cardioMs += ms;
+      else if (fbSport) sportMs += ms;
       else if (fbMobility) mobilityMs += ms;
     }
   }
 
-  if (strengthMs > 0 || cardioMs > 0 || mobilityMs > 0) {
-    if (strengthMs >= cardioMs && strengthMs >= mobilityMs && strengthMs > 0) return "strength";
-    if (cardioMs >= mobilityMs && cardioMs > 0) return "cardio";
+  if (strengthMs > 0 || cardioMs > 0 || mobilityMs > 0 || sportMs > 0) {
+    // Preferência em empates: strength > cardio > sport > mobility
+    const max = Math.max(strengthMs, cardioMs, sportMs, mobilityMs);
+    if (strengthMs === max && strengthMs > 0) return "strength";
+    if (cardioMs === max && cardioMs > 0) return "cardio";
+    if (sportMs === max && sportMs > 0) return "sport";
     return "mobility";
   }
 
   if (fbStrength) return "strength";
   if (fbCardio) return "cardio";
+  if (fbSport) return "sport";
   if (fbMobility) return "mobility";
   return "other";
 }
