@@ -3,12 +3,32 @@ import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, MapPin, Heart, Camera, Activity } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
+import {
+  Trophy,
+  MapPin,
+  Heart,
+  Activity,
+  Dumbbell,
+  Wind,
+  Trees,
+  Laugh,
+  Route as RouteIcon,
+  Timer,
+  CalendarCheck,
+  CalendarX,
+  Plane,
+} from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getAthlete } from "@/lib/data.functions";
 import { Avatar } from "./index";
 import { AWARD_META, jokeFor } from "@/lib/jokes";
-import { spDateKey } from "@/lib/gymrats-parser";
+import {
+  spDateKey,
+  spWeekKey,
+  classifyCheckInExclusive,
+  isOutdoor,
+  extractPlatformActivities,
+} from "@/lib/gymrats-parser";
 
 const MONTH_NAMES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const COLORS = ["#b6ff1a", "#8bd926", "#5ec05f", "#f0b800", "#e26161", "#7e6cd9"];
@@ -22,111 +42,276 @@ export const Route = createFileRoute("/atletas/$id")({
   component: AthleteDetail,
 });
 
+// Extrai cidade do location_name (ex: "Academia X, Rua Y, São Paulo, SP, Brasil" → "São Paulo")
+function cityFromLocationName(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const parts = name.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.length >= 3) return parts[parts.length - 3]; // costuma ser a cidade
+  return parts[parts.length - 1];
+}
+
+function getSubActivities(raw: unknown) {
+  const r = raw as { check_in_activities?: unknown } | null | undefined;
+  const arr = r?.check_in_activities;
+  return Array.isArray(arr) ? (arr as Array<{ platform_activity?: string | null; duration_millis?: number | null }>) : [];
+}
+
 function AthleteDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(opts(id));
   const { athlete, check_ins, month_results, awards } = data;
 
+  // Ano em foco = ano mais recente com check-ins
+  const year = useMemo(() => {
+    let y = new Date().getUTCFullYear();
+    for (const c of check_ins) {
+      const cy = Number(spDateKey(c.occurred_at).slice(0, 4));
+      if (cy > y) y = cy;
+    }
+    return y;
+  }, [check_ins]);
+
+  const yearCheckIns = useMemo(
+    () => check_ins.filter((c) => Number(spDateKey(c.occurred_at).slice(0, 4)) === year),
+    [check_ins, year],
+  );
+
+  // ─── Meta semanal (3x/semana) ───────────────────────────────────────────
+  const weekly = useMemo(() => {
+    const byWeek = new Map<string, Set<string>>();
+    for (const c of yearCheckIns) {
+      if (!c.is_valid) continue;
+      const wk = spWeekKey(c.occurred_at);
+      if (!byWeek.has(wk)) byWeek.set(wk, new Set());
+      byWeek.get(wk)!.add(spDateKey(c.occurred_at));
+    }
+    const weeks = [...byWeek.entries()]
+      .map(([wk, set]) => ({ wk, days: set.size, met: set.size >= 3 }))
+      .sort((a, b) => a.wk.localeCompare(b.wk));
+    const met = weeks.filter((w) => w.met).length;
+    const debt = weeks.filter((w) => !w.met).length;
+    return { weeks, met, debt };
+  }, [yearCheckIns]);
+
+  // ─── Auditoria por categoria ────────────────────────────────────────────
+  const audit = useMemo(() => {
+    let strength = 0;
+    let cardio = 0;
+    let outdoor = 0;
+    let laughs = 0;
+    let totalKm = 0;
+    let totalMin = 0;
+    const activeDays = new Set<string>();
+    for (const c of yearCheckIns) {
+      if (c.is_valid) activeDays.add(spDateKey(c.occurred_at));
+      const cat = classifyCheckInExclusive({
+        activity_type: c.activity_type,
+        title: c.title,
+        description: c.description,
+        check_in_activities: getSubActivities(c.raw),
+      });
+      if (cat === "strength") strength++;
+      else if (cat === "cardio") cardio++;
+      if (
+        isOutdoor({
+          activity_type: c.activity_type,
+          title: c.title,
+          description: c.description,
+          platform_activities: extractPlatformActivities(c.raw),
+        })
+      )
+        outdoor++;
+      for (const r of c.reactions ?? []) if (r.includes("😂")) laughs++;
+      totalKm += Number(c.distance_km ?? 0);
+      totalMin += c.duration_min ?? 0;
+    }
+    return {
+      strength,
+      cardio,
+      outdoor,
+      laughs,
+      totalKm,
+      totalMin,
+      activeDays: activeDays.size,
+    };
+  }, [yearCheckIns]);
+
+  // ─── DNA Maromba ────────────────────────────────────────────────────────
   const dna = useMemo(() => {
     const map = new Map<string, number>();
-    for (const c of check_ins) {
+    for (const c of yearCheckIns) {
       const k = c.activity_type ?? "indefinido";
       map.set(k, (map.get(k) ?? 0) + 1);
     }
     return [...map.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [check_ins]);
+  }, [yearCheckIns]);
 
-  const dnaTag = useMemo(() => {
-    const total = dna.reduce((s, d) => s + d.value, 0);
-    if (total === 0) return null;
-    const strength = dna.filter((d) => /strength|muscul|musculaç/i.test(d.name)).reduce((s, d) => s + d.value, 0);
-    const flex = dna.filter((d) => /pilate|yoga|stretch|alongament|flex/i.test(d.name)).reduce((s, d) => s + d.value, 0);
-    if (strength / total > 0.8) return "Monstro da Academia de Bairro";
-    if (flex / total > 0.4) return "Alongado & Flexível (Até Demais)";
-    return null;
-  }, [dna]);
-
-  const qg = useMemo(() => {
-    const buckets = new Map<string, { lat: number; lng: number; count: number; name: string | null }>();
-    for (const c of check_ins) {
-      if (c.location_latitude == null || c.location_longitude == null) continue;
-      const key = `${Number(c.location_latitude).toFixed(2)},${Number(c.location_longitude).toFixed(2)}`;
-      const cur = buckets.get(key) ?? { lat: 0, lng: 0, count: 0, name: c.location_name ?? null };
-      cur.lat += Number(c.location_latitude);
-      cur.lng += Number(c.location_longitude);
-      cur.count++;
-      buckets.set(key, cur);
+  // ─── Inteligência geográfica: QG / cidade base ──────────────────────────
+  const geo = useMemo(() => {
+    const cityCount = new Map<string, number>();
+    let withCity = 0;
+    for (const c of yearCheckIns) {
+      const city = cityFromLocationName(c.location_name);
+      if (city) {
+        withCity++;
+        cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
+      }
     }
-    let best: any = null;
-    for (const [, v] of buckets) if (!best || v.count > best.count) best = v;
-    if (!best) return null;
+    let baseCity: string | null = null;
+    let baseCount = 0;
+    for (const [city, n] of cityCount) {
+      if (n > baseCount) {
+        baseCity = city;
+        baseCount = n;
+      }
+    }
+    const awayCity = withCity - baseCount;
+
+    // Fallback grid se não tiver location_name
+    let baseLat: number | null = null;
+    let baseLng: number | null = null;
+    let awayGrid = 0;
+    if (!baseCity) {
+      const GRID = 0.05;
+      const cells = new Map<string, { lat: number; lng: number; count: number }>();
+      for (const c of yearCheckIns) {
+        if (c.location_latitude == null || c.location_longitude == null) continue;
+        const k = `${Math.round(Number(c.location_latitude) / GRID)}:${Math.round(Number(c.location_longitude) / GRID)}`;
+        const cur = cells.get(k) ?? { lat: 0, lng: 0, count: 0 };
+        cur.lat += Number(c.location_latitude);
+        cur.lng += Number(c.location_longitude);
+        cur.count++;
+        cells.set(k, cur);
+      }
+      let best: { lat: number; lng: number; count: number } | null = null;
+      let total = 0;
+      for (const v of cells.values()) {
+        total += v.count;
+        if (!best || v.count > best.count) best = v;
+      }
+      if (best) {
+        baseLat = Number((best.lat / best.count).toFixed(5));
+        baseLng = Number((best.lng / best.count).toFixed(5));
+        awayGrid = total - best.count;
+      }
+    }
+
     return {
-      lat: (best.lat / best.count).toFixed(5),
-      lng: (best.lng / best.count).toFixed(5),
-      count: best.count,
-      name: best.name,
+      baseCity,
+      baseCount,
+      awayCount: baseCity ? awayCity : awayGrid,
+      baseLat,
+      baseLng,
+      hasAnyGeo: cityCount.size > 0 || baseLat !== null,
     };
-  }, [check_ins]);
+  }, [yearCheckIns]);
 
-  const monthlyBars = useMemo(() => {
-    const m = new Map<string, { label: string; days: Set<string> }>();
-    for (const c of check_ins) {
-      if (!c.is_valid) continue;
-      const d = new Date(c.occurred_at);
-      const k = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-      const label = `${MONTH_NAMES[d.getUTCMonth() + 1]}/${String(d.getUTCFullYear()).slice(2)}`;
-      const cur = m.get(k) ?? { label, days: new Set() };
-      cur.days.add(spDateKey(c.occurred_at));
-      m.set(k, cur);
-    }
-    return [...m.entries()].sort().map(([, v]) => ({ name: v.label, days: v.days.size }));
-  }, [check_ins]);
-
-  const totalDays = monthlyBars.reduce((s, b) => s + b.days, 0);
-  const avgMin = check_ins.length
-    ? Math.round(check_ins.reduce((s, c) => s + (c.duration_min ?? 0), 0) / check_ins.length)
-    : 0;
-  const totalKm = check_ins.reduce((s, c) => s + Number(c.distance_km ?? 0), 0);
-  const noPhoto = check_ins.filter((c) => !c.has_photo).length;
-  const monthsWon = month_results.filter((m) => m.is_winner).length;
-  const monthsLast = month_results.filter((m) => m.is_last).length;
+  const monthsWon = month_results.filter((m: any) => m.is_winner).length;
+  const monthsLast = month_results.filter((m: any) => m.is_last).length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      {/* ─── Cabeçalho ─── */}
       <div>
         <Link to="/atletas" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
           ← Todos os atletas
         </Link>
-        <div className="mt-3 flex items-center gap-4">
+        <div className="mt-3 flex flex-wrap items-center gap-4">
           <Avatar src={athlete.profile_picture_url} name={athlete.full_name} size={88} />
-          <div>
-            <h1 className="display text-4xl text-lime">{athlete.full_name}</h1>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {dnaTag && <Badge variant="secondary">{dnaTag}</Badge>}
+          <div className="flex-1 min-w-0">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Prontuário {year}</div>
+            <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+            <div className="mt-2 flex flex-wrap gap-2">
               {monthsWon > 0 && (
                 <Badge className="gap-1"><Trophy className="h-3 w-3" />{monthsWon}x campeão</Badge>
               )}
               {monthsLast > 0 && (
                 <Badge variant="destructive">💸 {monthsLast}x lanterna</Badge>
               )}
+              {awards.map((a: any) => {
+                const meta = AWARD_META[a.award_key];
+                if (!meta) return null;
+                return (
+                  <Badge key={a.award_key} variant="secondary" className="gap-1">
+                    <span>{meta.emoji}</span> {meta.title}
+                  </Badge>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <Stat label="Dias ativos" value={totalDays} highlight />
-        <Stat label="Média min/treino" value={avgMin} />
-        <Stat label="Quilometragem" value={`${totalKm.toFixed(1)} km`} />
-        <Stat label="Treinos sem foto" value={noPhoto} danger={noPhoto > 0} />
+      {/* ─── Performance: meta semanal ─── */}
+      <section>
+        <SectionTitle icon={<Activity className="h-4 w-4" />} text="Performance · Meta 3x por semana" />
+        <div className="grid gap-3 md:grid-cols-3">
+          <BigStat
+            label="Dias Ativos Totais"
+            value={audit.activeDays}
+            tone="lime"
+          />
+          <BigStat
+            label="Semanas Cumpridas"
+            value={weekly.met}
+            sub={`de ${weekly.weeks.length} semanas registradas`}
+            tone="ok"
+            icon={<CalendarCheck className="h-5 w-5" />}
+          />
+          <BigStat
+            label="Semanas em Débito"
+            value={weekly.debt}
+            sub={weekly.debt > 0 ? "alerta do tio Dorflex" : "limpo, sem dívidas"}
+            tone={weekly.debt > 0 ? "danger" : "muted"}
+            icon={<CalendarX className="h-5 w-5" />}
+          />
+        </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
+      {/* ─── Localização ─── */}
+      <section>
+        <SectionTitle icon={<MapPin className="h-4 w-4" />} text="Inteligência Geográfica" />
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border bg-card/60 p-5">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">QG · Cidade Base</div>
+            {geo.baseCity ? (
+              <>
+                <div className="mt-1 display text-3xl text-lime truncate">{geo.baseCity}</div>
+                <div className="text-sm text-muted-foreground">{geo.baseCount} check-ins na base</div>
+              </>
+            ) : geo.baseLat !== null ? (
+              <>
+                <div className="mt-1 display text-2xl text-lime">
+                  {geo.baseLat?.toFixed(3)}, {geo.baseLng?.toFixed(3)}
+                </div>
+                <div className="text-sm text-muted-foreground">cluster geográfico (sem cidade definida)</div>
+              </>
+            ) : (
+              <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
+            )}
+          </div>
+          <div className="rounded-xl border border-border bg-card/60 p-5">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <Plane className="h-3.5 w-3.5" /> Treinos Fora da Base
+            </div>
+            <div className={`mt-1 display text-3xl ${geo.awayCount > 0 ? "text-primary" : ""}`}>{geo.awayCount}</div>
+            <div className="text-sm text-muted-foreground">
+              {geo.hasAnyGeo
+                ? geo.awayCount > 0
+                  ? "check-ins fora do CEP usual"
+                  : "fiel ao QG, nem viajar viaja"
+                : "sem dados de geolocalização"}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── DNA Maromba ─── */}
+      <section>
+        <SectionTitle icon={<Activity className="h-4 w-4" />} text="DNA Maromba" />
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />DNA Maromba</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {dna.length === 0 ? (
               <div className="text-sm text-muted-foreground">Sem dados.</div>
             ) : (
@@ -143,55 +328,59 @@ function AthleteDetail() {
             )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Habitat Natural (QG)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {qg ? (
-              <>
-                <div className="display text-3xl">{qg.count} <span className="text-base font-normal text-muted-foreground">treinos no mesmo lugar</span></div>
-                {qg.name && <div className="text-muted-foreground">{qg.name}</div>}
-                <a
-                  className="inline-flex items-center gap-1 text-primary hover:underline"
-                  href={`https://www.google.com/maps?q=${qg.lat},${qg.lng}`}
-                  target="_blank" rel="noreferrer"
-                >
-                  📍 {qg.lat}, {qg.lng}
-                </a>
-              </>
-            ) : (
-              <div className="text-muted-foreground">Sem geolocalização cadastrada.</div>
-            )}
-          </CardContent>
-        </Card>
       </section>
 
+      {/* ─── Auditoria de categorias ─── */}
       <section>
-        <h2 className="display mb-3 text-xl flex items-center gap-2"><Activity className="h-5 w-5" />Dias ativos por mês</h2>
-        {monthlyBars.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Sem treinos válidos.</div>
-        ) : (
-          <div className="h-56 rounded-xl border border-border bg-card/40 p-4">
-            <ResponsiveContainer>
-              <BarChart data={monthlyBars}>
-                <XAxis dataKey="name" stroke="#888" fontSize={12} />
-                <YAxis stroke="#888" fontSize={12} allowDecimals={false} />
-                <Tooltip contentStyle={{ background: "oklch(0.21 0.015 140)", border: "1px solid oklch(0.30 0.02 140)", borderRadius: 8 }} />
-                <Bar dataKey="days" fill="#b6ff1a" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
+        <p className="mb-3 text-xs text-muted-foreground">
+          Números brutos que alimentam cada categoria de prêmio. Sem moleza, sem desconfiança.
+        </p>
+        <div className="overflow-hidden rounded-xl border border-border">
+          <AuditRow
+            icon={<Dumbbell className="h-4 w-4 text-primary" />}
+            label="Treinos de Musculação"
+            sub="alimenta o prêmio MAROMBEIRO 💪"
+            value={audit.strength}
+          />
+          <AuditRow
+            icon={<Wind className="h-4 w-4 text-primary" />}
+            label="Treinos de Cardio"
+            sub="alimenta o Inimigo do Cardiologista 🫀"
+            value={audit.cardio}
+          />
+          <AuditRow
+            icon={<Trees className="h-4 w-4 text-primary" />}
+            label="Treinos Ao Ar Livre"
+            sub="alimenta o Amante da Natureza 🌿"
+            value={audit.outdoor}
+          />
+          <AuditRow
+            icon={<Laugh className="h-4 w-4 text-primary" />}
+            label="Reações de risada 😂"
+            sub="alimenta o Humorista do WOD"
+            value={audit.laughs}
+          />
+          <AuditRow
+            icon={<RouteIcon className="h-4 w-4 text-primary" />}
+            label="Quilometragem acumulada"
+            sub="alimenta o Papa-Milhas 🏃‍♀️"
+            value={`${audit.totalKm.toFixed(1)} km`}
+          />
+          <AuditRow
+            icon={<Timer className="h-4 w-4 text-primary" />}
+            label="Tempo total treinando"
+            sub={`média de ${yearCheckIns.length ? Math.round(audit.totalMin / yearCheckIns.length) : 0} min/treino`}
+            value={`${audit.totalMin} min`}
+            last
+          />
+        </div>
       </section>
 
-      <section>
-        <h2 className="display mb-3 text-xl flex items-center gap-2"><Trophy className="h-5 w-5 text-primary" />Estante de Badges</h2>
-        {awards.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Nenhum prêmio ainda. Não basta treinar, tem que ter personalidade.
-          </div>
-        ) : (
+      {/* ─── Estante de Badges (com piada) ─── */}
+      {awards.length > 0 && (
+        <section>
+          <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Estante de Badges" />
           <div className="grid gap-3 md:grid-cols-2">
             {awards.map((a: any) => {
               const meta = AWARD_META[a.award_key];
@@ -210,11 +399,48 @@ function AthleteDetail() {
               );
             })}
           </div>
+        </section>
+      )}
+
+      {/* ─── Linha do tempo semanal ─── */}
+      <section>
+        <SectionTitle icon={<CalendarCheck className="h-4 w-4" />} text={`Linha do tempo · Semanas de ${year}`} />
+        {weekly.weeks.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Sem semanas registradas em {year}.</div>
+        ) : (
+          <div className="rounded-xl border border-border bg-card/40 p-4">
+            <div className="flex flex-wrap gap-1.5">
+              {weekly.weeks.map((w) => (
+                <div
+                  key={w.wk}
+                  title={`${w.wk} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"}`}
+                  className={`flex h-9 min-w-[44px] items-center justify-center rounded-md border px-2 font-mono text-xs ${
+                    w.met
+                      ? "border-primary/40 bg-primary/15 text-primary"
+                      : "border-destructive/40 bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {w.wk.slice(5)} · {w.days}d
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded-sm border border-primary/40 bg-primary/15" />
+                meta cumprida (≥3 dias)
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded-sm border border-destructive/40 bg-destructive/10" />
+                semana em débito
+              </span>
+            </div>
+          </div>
         )}
       </section>
 
+      {/* ─── Histórico mensal ─── */}
       <section>
-        <h2 className="display mb-3 text-xl flex items-center gap-2"><Heart className="h-5 w-5 text-destructive" />Histórico Clínico</h2>
+        <SectionTitle icon={<Heart className="h-4 w-4 text-destructive" />} text="Histórico Clínico Mensal" />
         <div className="overflow-hidden rounded-xl border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-xs uppercase tracking-widest text-muted-foreground">
@@ -227,22 +453,24 @@ function AthleteDetail() {
               </tr>
             </thead>
             <tbody>
-              {month_results.sort((a: any, b: any) => (b.months?.year - a.months?.year) || (b.months?.month - a.months?.month)).map((r: any) => (
-                <tr key={r.month_id} className="border-t border-border/60">
-                  <td className="px-3 py-2">
-                    <Link to="/meses/$id" params={{ id: r.month_id }} className="hover:underline">
-                      {MONTH_NAMES[r.months?.month]}/{String(r.months?.year).slice(2)} · {r.months?.name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono display text-lg">{r.active_days}</td>
-                  <td className="px-3 py-2 text-right font-mono">{r.total_checkins}</td>
-                  <td className="px-3 py-2 text-right font-mono">#{r.rank}</td>
-                  <td className="px-3 py-2">
-                    {r.is_winner && <Badge>🏆</Badge>}
-                    {r.is_last && <Badge variant="destructive">💸</Badge>}
-                  </td>
-                </tr>
-              ))}
+              {month_results
+                .sort((a: any, b: any) => (b.months?.year - a.months?.year) || (b.months?.month - a.months?.month))
+                .map((r: any) => (
+                  <tr key={r.month_id} className="border-t border-border/60">
+                    <td className="px-3 py-2">
+                      <Link to="/meses/$id" params={{ id: r.month_id }} className="hover:underline">
+                        {MONTH_NAMES[r.months?.month]}/{String(r.months?.year).slice(2)} · {r.months?.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono display text-lg">{r.active_days}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.total_checkins}</td>
+                    <td className="px-3 py-2 text-right font-mono">#{r.rank}</td>
+                    <td className="px-3 py-2">
+                      {r.is_winner && <Badge>🏆</Badge>}
+                      {r.is_last && <Badge variant="destructive">💸</Badge>}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -251,11 +479,72 @@ function AthleteDetail() {
   );
 }
 
-function Stat({ label, value, highlight, danger }: { label: string; value: React.ReactNode; highlight?: boolean; danger?: boolean }) {
+function SectionTitle({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className={`rounded-xl border p-4 ${highlight ? "border-primary/40 bg-primary/10" : danger ? "border-destructive/30 bg-destructive/5" : "border-border bg-card/60"}`}>
-      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-1 display text-3xl ${highlight ? "text-lime" : ""}`}>{value}</div>
+    <h2 className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+      {icon}
+      <span>{text}</span>
+    </h2>
+  );
+}
+
+function BigStat({
+  label,
+  value,
+  sub,
+  tone = "muted",
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  tone?: "lime" | "ok" | "danger" | "muted";
+  icon?: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "lime"
+      ? "border-primary/40 bg-primary/10"
+      : tone === "ok"
+        ? "border-primary/30 bg-primary/5"
+        : tone === "danger"
+          ? "border-destructive/40 bg-destructive/10"
+          : "border-border bg-card/60";
+  const valueClass = tone === "danger" ? "text-destructive" : tone === "muted" ? "" : "text-lime";
+  return (
+    <div className={`rounded-xl border p-5 ${toneClass}`}>
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>{label}</span>
+        {icon}
+      </div>
+      <div className={`mt-2 display text-4xl ${valueClass}`}>{value}</div>
+      {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+    </div>
+  );
+}
+
+function AuditRow({
+  icon,
+  label,
+  sub,
+  value,
+  last,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sub: string;
+  value: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <div className={`flex items-center gap-3 bg-card/40 px-4 py-3 ${last ? "" : "border-b border-border/60"}`}>
+      <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm uppercase tracking-wide">{label}</div>
+        <div className="text-xs text-muted-foreground">{sub}</div>
+      </div>
+      <div className="display text-2xl text-lime font-mono">{value}</div>
     </div>
   );
 }
