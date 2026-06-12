@@ -125,3 +125,29 @@ export const AWARD_META: Record<
     short: "Mais treinos depois das 22h.",
   },
 };
+
+// Rótulos PT-BR para as chaves de `details` salvas em annual_awards.
+export const DETAIL_LABELS: Record<string, { singular: string; plural: string }> = {
+  weeks_at_three: { singular: "semana no limite", plural: "semanas no limite" },
+  compressed_weeks: { singular: "semana comprimida", plural: "semanas comprimidas" },
+  times_last: { singular: "vez na lanterna", plural: "vezes na lanterna" },
+  matches: { singular: "treino flexível", plural: "treinos flexíveis" },
+  far_checkins: { singular: "treino viajando", plural: "treinos viajando" },
+  laughs: { singular: "risada", plural: "risadas" },
+  complaints: { singular: "lamento", plural: "lamentos" },
+  total_km: { singular: "km", plural: "km" },
+  comebacks: { singular: "ressurreição", plural: "ressurreições" },
+  early_checkins: { singular: "treino antes das 7h", plural: "treinos antes das 7h" },
+  late_checkins: { singular: "treino depois das 22h", plural: "treinos depois das 22h" },
+};
+
+// Chaves de details que são metadados internos (não exibir no card).
+export const DETAIL_HIDDEN = new Set(["base_lat", "base_lng", "home_checkins"]);
+
+export function formatDetail(key: string, value: unknown): string | null {
+  if (DETAIL_HIDDEN.has(key)) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  const label = DETAIL_LABELS[key];
+  if (!label) return `${value} ${key.replace(/_/g, " ")}`;
+  return `${n} ${n === 1 ? label.singular : label.plural}`;
+}
