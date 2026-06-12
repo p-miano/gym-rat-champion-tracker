@@ -217,7 +217,7 @@ const MOBILITY_TYPES = new Set([
   "mobility",
 ]);
 const MOBILITY_TEXT_RE =
-  /\b(pilates|yoga|mobs|mobilidade|alongament(?:o|os)?|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril)\b/;
+  /\b(pilates|yoga|mobs|mobilidade|alongament(?:o|os)?|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril|massagem|cadeira de massagem|recupera[cç][aã]o|recovery)\b/;
 
 export function isMobility(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();

@@ -1,62 +1,28 @@
 ## Objetivo
 
-Resolver as 15 categorizações erradas da Anne Miano (e similares de outros atletas):
-- LPO indo pra "outros" por bug
-- Surf sem categoria → criar nova categoria **Outros Esportes**
-- Funcional/circuito sem categoria → mapear pra **Cardio**
+Reduzir os 15 "Sem categoria" do Allan adicionando keywords óbvias, sem virar um default agressivo (titles genéricos como "Domingou!" continuam em Sem categoria).
 
-"Sem categoria" permanece como rede de segurança pra check-ins que não batem em nenhum regex (decisão caso a caso depois).
+## Mudanças em `src/lib/gymrats-parser.ts`
 
-## Mudanças
+**Outros Esportes — incluir esportes de mesa**
+- `SPORT_TEXT_RE`: adicionar `ping[\s-]?pong|t[eê]nis de mesa|sinuca|bilhar|fute[\s-]?mesa|esporte novo`.
 
-### 1. `src/lib/gymrats-parser.ts`
+**Mobilidade — incluir recuperação**
+- `MOBILITY_TEXT_RE`: adicionar `massagem|cadeira de massagem|recupera[cç][aã]o|recovery`.
 
-**Fix LPO**
-- `STRENGTH_TYPES`: adicionar `weight_lifting` (variante com underscore).
-- `STRENGTH_TEXT_RE`: incluir `\blpo\b`.
+## Resultado esperado para Allan
 
-**Cardio — incluir funcional/circuito**
-- `CARDIO_NATIVE` e `CARDIO_PLATFORMS`: adicionar `circuit_training`, `functional_training`, `cross_training`.
-- `CARDIO_PLATFORM_RE`: adicionar `circuit|functional_training|cross_training`.
-- `CARDIO_TEXT_RE`: adicionar `funcional|circuito|wod|crossfit`.
-- ⚠ Não confundir com `functional_strength_training` (continua em `STRENGTH_PLATFORMS`).
+Resolvido (3 → categoria nova):
+- 05/05 "cadeira de massagem" → **Mobilidade**
+- 08/05 "Esporte novo" → **Outros Esportes**
+- 15/05 "Olha o ping pong" → **Outros Esportes**
+- 19/05 "Nem só de ping pong" → **Outros Esportes**
 
-**Nova categoria: Outros Esportes (`sport`)**
-- Tipo de retorno:
-  ```ts
-  export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "sport" | "other";
-  ```
-- Novo `SPORT_TYPES` / `SPORT_PLATFORMS`: `surfing`, `skating`, `skateboarding`, `snowboarding`, `climbing`, `soccer`, `basketball`, `volleyball`, `tennis`, `badminton`, `martial_arts`, `boxing`, `kickboxing`, `jiu_jitsu`, `judo`, `karate`, `taekwondo`, `mma`, `golf`, `baseball`.
-- `SPORT_TEXT_RE`: `surf|skate|escalad|boulder|futebol|basquete|v[oô]lei|t[eê]nis|bad?minton|boxe|muay|jiu[\s-]?jitsu|jud[oô]|karat[eê]|taekwondo|mma|luta`.
-- Função `isSport(c: ClassifyInput): boolean`.
+Permanece em **Sem categoria** (12 dias) — títulos sem pista nenhuma:
+- 03/04, 05/04, 07/04, 08/04, 09/04, 19/04, 20/04, 26/04, 04/05, 23/05, 26/05
 
-**Precedência em `classifyCheckInExclusive`**
+Esses ficam como rede de segurança até o atleta passar a registrar modalidade no Gym Rats.
 
-Quatro buckets de duração: strength, cardio, mobility, sport. Decisão:
-1. Se houver ms em algum bucket → vence o maior. Empates resolvidos nesta ordem de preferência: **strength > cardio > sport > mobility** (carga > aeróbico cíclico > esporte > ADM).
-2. Sem ms → cascata textual exclusiva: `isStrength` → `isCardio` → `isSport` → `isMobility` → `other`.
+## Validação
 
-Subs desconhecidas distribuem ms via fallback textual do check-in.
-
-### 2. `src/routes/atletas.$id.tsx`
-
-- Contador `sport` no `audit` (junto com `strength`/`cardio`/`mobility`/`other`).
-- Nova linha "Treinos de Outros Esportes" no painel (ícone neutro; sub: "surf, escalada, futebol, lutas etc.").
-- Texto explicativo: Musculação + Cardio + Mobilidade + Outros Esportes + Outros = Dias Ativos.
-
-### 3. Validação esperada para Anne
-
-- 15/04 LPO → musculação
-- 18/04 WOD+REMO, 20/04 remo, 22/04 → cardio
-- 30/04, 14/05, 26/05, 28/05 Surftraining → cardio
-- 05/05 Surf training (`functional_training`) → cardio
-- 29/04, 09/05, 12/05, 13/05, 15/05, 20/05, 22/05, 27/05, 29/05 Surf → outros esportes
-- 01/04 surfe (sub surfing 5400000ms) → outros esportes
-- 13/04 "row + mobilidade surf" → outros esportes (texto "surf" bate)
-
-Esperado: 0 dias em "Sem categoria" pra Anne.
-
-## Detalhes técnicos
-
-- `awards.ts` só consome `"strength"` e `"cardio"` — adicionar `sport` é compatível.
-- Meta semanal 3× continua por Dia Ativo (qualquer categoria).
+Rerodar a página do Allan e conferir os contadores; rodar Anne e Amanda pra garantir que as adições não criam falsos positivos (ex: o regex `massagem` não bate em nenhum título existente delas).
