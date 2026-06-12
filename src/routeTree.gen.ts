@@ -10,13 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MesesRouteImport } from './routes/meses'
+import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtletasRouteImport } from './routes/atletas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MesesIdRouteImport } from './routes/meses.$id'
+import { Route as AtletasIdRouteImport } from './routes/atletas.$id'
 
 const MesesRoute = MesesRouteImport.update({
   id: '/meses',
   path: '/meses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportarRoute = ImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtletasRoute = AtletasRouteImport.update({
@@ -34,37 +47,75 @@ const MesesIdRoute = MesesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => MesesRoute,
 } as any)
+const AtletasIdRoute = AtletasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AtletasRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/atletas': typeof AtletasRoute
+  '/atletas': typeof AtletasRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/importar': typeof ImportarRoute
   '/meses': typeof MesesRouteWithChildren
+  '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/atletas': typeof AtletasRoute
+  '/atletas': typeof AtletasRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/importar': typeof ImportarRoute
   '/meses': typeof MesesRouteWithChildren
+  '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/atletas': typeof AtletasRoute
+  '/atletas': typeof AtletasRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/importar': typeof ImportarRoute
   '/meses': typeof MesesRouteWithChildren
+  '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/atletas' | '/meses' | '/meses/$id'
+  fullPaths:
+    | '/'
+    | '/atletas'
+    | '/auth'
+    | '/importar'
+    | '/meses'
+    | '/atletas/$id'
+    | '/meses/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/atletas' | '/meses' | '/meses/$id'
-  id: '__root__' | '/' | '/atletas' | '/meses' | '/meses/$id'
+  to:
+    | '/'
+    | '/atletas'
+    | '/auth'
+    | '/importar'
+    | '/meses'
+    | '/atletas/$id'
+    | '/meses/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/atletas'
+    | '/auth'
+    | '/importar'
+    | '/meses'
+    | '/atletas/$id'
+    | '/meses/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AtletasRoute: typeof AtletasRoute
+  AtletasRoute: typeof AtletasRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ImportarRoute: typeof ImportarRoute
   MesesRoute: typeof MesesRouteWithChildren
 }
 
@@ -75,6 +126,20 @@ declare module '@tanstack/react-router' {
       path: '/meses'
       fullPath: '/meses'
       preLoaderRoute: typeof MesesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/importar': {
+      id: '/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof ImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/atletas': {
@@ -98,8 +163,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MesesIdRouteImport
       parentRoute: typeof MesesRoute
     }
+    '/atletas/$id': {
+      id: '/atletas/$id'
+      path: '/$id'
+      fullPath: '/atletas/$id'
+      preLoaderRoute: typeof AtletasIdRouteImport
+      parentRoute: typeof AtletasRoute
+    }
   }
 }
+
+interface AtletasRouteChildren {
+  AtletasIdRoute: typeof AtletasIdRoute
+}
+
+const AtletasRouteChildren: AtletasRouteChildren = {
+  AtletasIdRoute: AtletasIdRoute,
+}
+
+const AtletasRouteWithChildren =
+  AtletasRoute._addFileChildren(AtletasRouteChildren)
 
 interface MesesRouteChildren {
   MesesIdRoute: typeof MesesIdRoute
@@ -113,7 +196,9 @@ const MesesRouteWithChildren = MesesRoute._addFileChildren(MesesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AtletasRoute: AtletasRoute,
+  AtletasRoute: AtletasRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ImportarRoute: ImportarRoute,
   MesesRoute: MesesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
