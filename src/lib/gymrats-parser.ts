@@ -217,7 +217,7 @@ const MOBILITY_TYPES = new Set([
   "mobility",
 ]);
 const MOBILITY_TEXT_RE =
-  /\b(pilates|yoga|mobs|mobilidade|alongament(?:o|os)?|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril)\b/;
+  /\b(pilates|yoga|mobs|mobilidade|alongament(?:o|os)?|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril|massagem|cadeira de massagem|recupera[cç][aã]o|recovery)\b/;
 
 export function isMobility(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
@@ -250,7 +250,7 @@ const SPORT_TYPES = new Set([
   "baseball",
 ]);
 const SPORT_TEXT_RE =
-  /\b(surf|skate|escalad|boulder|futebol|basquete|v[oô]lei|t[eê]nis|bad?minton|boxe|muay|jiu[\s-]?jitsu|jud[oô]|karat[eê]|taekwondo|mma|luta)\b/;
+  /\b(surf|skate|escalad|boulder|futebol|basquete|v[oô]lei|t[eê]nis|bad?minton|boxe|muay|jiu[\s-]?jitsu|jud[oô]|karat[eê]|taekwondo|mma|luta|ping[\s-]?pong|t[eê]nis de mesa|sinuca|bilhar|fute[\s-]?mesa|esporte novo)\b/;
 
 export function isSport(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
