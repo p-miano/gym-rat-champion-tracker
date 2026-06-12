@@ -1,0 +1,9 @@
+# Atletas com Dorflex
+
+> Placar anual bem-humorado do grupo "Atletas com Dorflex". Importa exports JSON do app Gym Rats, calcula campeão e Cliente Ouro (lanterna) por mês, mantém o ranking do ano e distribui badges sarcásticos pra cada atleta.
+
+## Pages
+
+- [Hall da Fama](/): Pódio anual, bolada estimada e Clientes Ouro do Dorflex.
+- [Meses](/meses): Lista de todos os meses do desafio com campeão e lanterna.
+- [Atletas](/atletas): Diretório de todos os atletas do grupo.
