@@ -1,26 +1,60 @@
-## Problema
+## Objetivo
 
-A semana de 25→31/05 aparece como "em curso" (cinza) porque o cutoff dinâmico está sendo calculado **só com os check-ins deste atleta**. Se o último check-in dele foi antes de 31/05 (ou mesmo em 31/05 mas com um detalhe de fuso), o domingo da semana cai fora do cutoff e a semana não é avaliada.
+Refinar `classifyCheckInExclusive` em `src/lib/gymrats-parser.ts` para suportar três categorias mutuamente exclusivas: **Musculação**, **Cardio** e **Mobilidade** (nova). Treinos que não se encaixam continuam como `other`.
 
-O cutoff correto é **global**: a data do check-in mais recente do dataset inteiro (qualquer atleta). Assim a régua de avaliação fica igual pra todo mundo e a semana só vira cinza se nenhum atleta tiver registrado nada nela ainda.
+## Mudanças
 
-## Plano
+### 1. `src/lib/gymrats-parser.ts`
 
-1. **Server (`src/lib/data.functions.ts` → `getAthlete`)**
-   - Adicionar uma quinta query em paralelo: `select("occurred_at").order("occurred_at", { ascending: false }).limit(1)` na tabela `check_ins` (sem filtro de atleta).
-   - Retornar o campo `dataset_max_occurred_at: string | null` junto com os outros dados.
+**Tipo de retorno**
+```ts
+export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "other";
+```
 
-2. **Cliente (`src/routes/atletas.$id.tsx` → `weekly` useMemo)**
-   - Trocar o cálculo de `maxKey` (que hoje varre só `check_ins` do atleta) por `spDateKey(dataset_max_occurred_at)` vindo do servidor.
-   - Manter o fallback: se `dataset_max_occurred_at` for nulo, usar `todayKey`.
-   - Resto da lógica (transição 30/03, meta 1 dia na semana de início, formato DD/MM, semanas após o cutoff escondidas) fica igual.
+**Cardio — expandir**
+- `CARDIO_PLATFORMS`: adicionar `stationary_bike`, `spinning`, `rowing_machine`, `stair_climber`, `hiit`, `dance`.
+- `CARDIO_TEXT_RE` (e `CARDIO_TEXT_RE` do `isCardio`): incluir `bike|bicicleta|spinning|ergom[eé]trica|esteira|corrid(a|inha)?|caminhad(a|inha)?|trote|escada|el[ií]ptico|transport|remo|dance|dança|hiit`.
 
-3. **Validação**
-   - Abrir a página do atleta da Paula e confirmar que a semana 25/05→31/05 aparece avaliada (verde ou vermelha, não cinza).
-   - Confirmar que semanas claramente futuras (depois do último check-in do dataset) continuam sumindo do timeline.
+**Mobilidade — nova**
+```ts
+const MOBILITY_PLATFORMS = new Set([
+  "pilates", "yoga", "stretching", "flexibility", "mind_and_body",
+]);
+const MOBILITY_TEXT_RE =
+  /\b(pilates|yoga|mobs|mobilidade|alongamento|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril|ombro\s+mob)\b/;
 
-## Detalhes técnicos
+function isMobility(c: ClassifyInput): boolean { ... }
+```
 
-- A query extra é barata (`order desc limit 1` num índice por `occurred_at`).
-- `dataset_max_occurred_at` é um ISO timestamp; converter pra chave SP com `spDateKey` no cliente garante consistência de fuso com o resto da timeline.
-- Nada muda na lógica de classificação de treinos, auditoria ou nos outros painéis.
+**Nova ordem de precedência em `classifyCheckInExclusive`**
+
+Somar duração (`duration_millis`) por categoria a partir de `check_in_activities`, usando os três buckets (strength, cardio, mobility). Sub-atividade desconhecida cai no fallback textual do check-in (strength → cardio → mobility, nessa ordem).
+
+Decisão:
+1. Se houver ms acumulado em qualquer bucket → vence o **maior**. Empate entre strength e qualquer outro → **strength** (regra atual mantida: carga vence ADM). Empate cardio vs mobility → **cardio**.
+2. Sem ms → cascata textual exclusiva: `isStrength` → `isCardio` → `isMobility` → `other`.
+
+Isso garante:
+- Cardio expandido nunca cai em musculação/mobilidade.
+- Pilates/yoga puro vai pra mobilidade, não pra `other`.
+- Agachamento profundo com carga continua musculação (strength vence empate).
+- HIIT/dance contam como cardio.
+
+### 2. `src/routes/atletas.$id.tsx`
+
+- Adicionar `mobility` aos contadores de Dias Ativos: hoje há `strength`, `cardio`, `others`. Passa a ter `strength`, `cardio`, `mobility`, `others`. A soma das 4 categorias deve continuar batendo com Total de Dias Ativos.
+- Adicionar um cartão/coluna "Mobilidade" no painel de métricas e na tabela/auditoria (mesmo layout dos demais).
+- Atualizar legendas e textos em PT-BR ("Mobilidade").
+- A lógica semanal (meta 3×/semana segunda→domingo) **não** considera mobilidade como treino válido pra meta, mantendo o critério original (musculação+cardio). Confirmar com o usuário se quer incluir — ver pergunta abaixo.
+
+### 3. Validação
+
+- Reabrir página da Amanda e conferir:
+  - Os 7 dias de Pilates aparecem em **Mobilidade**.
+  - 27/05 ("Bike", `stationary_bike`) aparece em **Cardio**.
+  - "Treinos sem categoria" zera (ou some) pra ela.
+- Conferir outro atleta com musculação pesada pra garantir que strength continua dominando.
+
+## Pergunta aberta
+
+Mobilidade conta pra meta semanal de 3 treinos? Pelo enunciado original ("Musculação ou Cardio") presumo **não**, mas confirma antes de eu mexer na regra da semana.

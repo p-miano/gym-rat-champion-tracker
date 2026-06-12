@@ -140,10 +140,16 @@ const CARDIO_NATIVE = new Set([
   "treadmill",
   "cycling",
   "swimming",
+  "stationary_bike",
+  "spinning",
+  "rowing_machine",
+  "stair_climber",
+  "hiit",
+  "dance",
 ]);
-const CARDIO_PLATFORM_RE = /treadmill|running|elliptical/;
+const CARDIO_PLATFORM_RE = /treadmill|running|elliptical|stationary_bike|spinning|rowing|stair|hiit|dance/;
 const CARDIO_TEXT_RE =
-  /\b(corrid(?:a|inha)?|esteira|caminhad(?:a|inha)?|caminhar|cardio(?:zinho)?|pedal(?:ada)?|escada|el[ií]ptico)\b/;
+  /\b(corrid(?:a|inha)?|esteira|caminhad(?:a|inha)?|caminhar|cardio(?:zinho)?|pedal(?:ada)?|escada|el[ií]ptico|bike|bicicleta|spinning|ergom[eé]trica|trote|transport|remo|dance|dan[cç]a|hiit)\b/;
 
 export function isCardio(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
@@ -153,7 +159,15 @@ export function isCardio(c: ClassifyInput): boolean {
   return CARDIO_TEXT_RE.test(blob);
 }
 
-const INDOOR_TYPES = new Set(["treadmill", "indoor_cycling", "elliptical"]);
+const INDOOR_TYPES = new Set([
+  "treadmill",
+  "indoor_cycling",
+  "elliptical",
+  "stationary_bike",
+  "spinning",
+  "rowing_machine",
+  "stair_climber",
+]);
 const OUTDOOR_TYPES = new Set([
   "running",
   "walking",
@@ -177,9 +191,11 @@ const STRENGTH_TYPES = new Set([
   "strength_training",
   "strength",
   "lpo",
+  "functional_strength_training",
+  "functional_strength",
 ]);
 const STRENGTH_TEXT_RE =
-  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|perna)\b/;
+  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|agachament|levantament|peito|costas|ombro|b[ií]ceps|tr[ií]ceps|gl[uú]teo|perna)\b/;
 
 export function isStrength(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
@@ -188,9 +204,28 @@ export function isStrength(c: ClassifyInput): boolean {
   return STRENGTH_TEXT_RE.test(blob);
 }
 
-// Classificação exclusiva strength × cardio por check-in.
-// Soma a duração das sub-atividades (check_in_activities) por categoria; vence a maior.
-// Empate ou ausência de sub-atividades cai pra cascata textual com strength tendo precedência.
+const MOBILITY_TYPES = new Set([
+  "pilates",
+  "yoga",
+  "stretching",
+  "flexibility",
+  "mind_and_body",
+  "mobility",
+]);
+const MOBILITY_TEXT_RE =
+  /\b(pilates|yoga|mobs|mobilidade|alongament(?:o|os)?|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril)\b/;
+
+export function isMobility(c: ClassifyInput): boolean {
+  const t = (c.activity_type ?? "").toLowerCase();
+  if (MOBILITY_TYPES.has(t)) return true;
+  if (c.platform_activities.some((p) => MOBILITY_TYPES.has(p))) return true;
+  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
+  return MOBILITY_TEXT_RE.test(blob);
+}
+
+// Classificação exclusiva por check-in/dia: strength × cardio × mobility × other.
+// Soma duração das sub-atividades por categoria; vence a maior.
+// Empate com strength → strength (carga vence ADM). Empate cardio vs mobility → cardio.
 const CARDIO_PLATFORMS = new Set([
   "treadmill",
   "running",
@@ -202,6 +237,12 @@ const CARDIO_PLATFORMS = new Set([
   "stairs",
   "rowing",
   "hiking",
+  "stationary_bike",
+  "spinning",
+  "rowing_machine",
+  "stair_climber",
+  "hiit",
+  "dance",
 ]);
 const STRENGTH_PLATFORMS = new Set([
   "strength_training",
@@ -211,8 +252,16 @@ const STRENGTH_PLATFORMS = new Set([
   "functional_strength_training",
   "functional_strength",
 ]);
+const MOBILITY_PLATFORMS = new Set([
+  "pilates",
+  "yoga",
+  "stretching",
+  "flexibility",
+  "mind_and_body",
+  "mobility",
+]);
 
-export type ExclusiveCategory = "strength" | "cardio" | "other";
+export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "other";
 
 export interface ExclusiveClassifyInput {
   activity_type: string | null;
@@ -229,7 +278,6 @@ export function classifyCheckInExclusive(
 ): ExclusiveCategory {
   const subs = Array.isArray(c.check_in_activities) ? c.check_in_activities : [];
 
-  // Fallback textual do check-in (usado tanto para subs "other"/desconhecidas quanto sem subs)
   const fallbackInput: ClassifyInput = {
     activity_type: c.activity_type,
     title: c.title,
@@ -238,34 +286,36 @@ export function classifyCheckInExclusive(
       .map((s) => (s.platform_activity ?? "").toString().toLowerCase())
       .filter((p) => p.length > 0),
   };
-  const fallbackStrength = isStrength(fallbackInput);
-  const fallbackCardio = !fallbackStrength && isCardio(fallbackInput);
+  const fbStrength = isStrength(fallbackInput);
+  const fbCardio = !fbStrength && isCardio(fallbackInput);
+  const fbMobility = !fbStrength && !fbCardio && isMobility(fallbackInput);
 
   let strengthMs = 0;
   let cardioMs = 0;
+  let mobilityMs = 0;
   for (const s of subs) {
     const p = (s.platform_activity ?? "").toString().toLowerCase();
     const ms = Number(s.duration_millis ?? 0) || 0;
     if (ms <= 0) continue;
-    if (STRENGTH_PLATFORMS.has(p)) {
-      strengthMs += ms;
-    } else if (CARDIO_PLATFORMS.has(p)) {
-      cardioMs += ms;
-    } else {
-      // platform_activity "other"/desconhecido → usa o fallback textual do check-in
-      if (fallbackStrength) strengthMs += ms;
-      else if (fallbackCardio) cardioMs += ms;
+    if (STRENGTH_PLATFORMS.has(p)) strengthMs += ms;
+    else if (CARDIO_PLATFORMS.has(p)) cardioMs += ms;
+    else if (MOBILITY_PLATFORMS.has(p)) mobilityMs += ms;
+    else {
+      if (fbStrength) strengthMs += ms;
+      else if (fbCardio) cardioMs += ms;
+      else if (fbMobility) mobilityMs += ms;
     }
   }
 
-  if (strengthMs > 0 || cardioMs > 0) {
-    // Empate → strength (musculação é a base do treino combinado)
-    return strengthMs >= cardioMs ? "strength" : "cardio";
+  if (strengthMs > 0 || cardioMs > 0 || mobilityMs > 0) {
+    if (strengthMs >= cardioMs && strengthMs >= mobilityMs && strengthMs > 0) return "strength";
+    if (cardioMs >= mobilityMs && cardioMs > 0) return "cardio";
+    return "mobility";
   }
 
-  // Sem subs com duração e sem hit nas listas → fallback puro
-  if (fallbackStrength) return "strength";
-  if (fallbackCardio) return "cardio";
+  if (fbStrength) return "strength";
+  if (fbCardio) return "cardio";
+  if (fbMobility) return "mobility";
   return "other";
 }
 
