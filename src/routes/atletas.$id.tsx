@@ -182,14 +182,13 @@ function AthleteDetail() {
 
     let strength = 0;
     let cardio = 0;
+    let mobility = 0;
     let other = 0;
     let outdoor = 0;
     let laughs = 0;
     let totalKm = 0;
     let totalMin = 0;
     for (const b of days.values()) {
-      // Classifica a sessão diária: somatório de duração das sub-atividades do dia.
-      // Empate → musculação.
       const cat = classifyCheckInExclusive({
         activity_type: b.activity_types.find((t) => t) ?? null,
         title: b.titles.join(" | ") || null,
@@ -198,6 +197,7 @@ function AthleteDetail() {
       });
       if (cat === "strength") strength++;
       else if (cat === "cardio") cardio++;
+      else if (cat === "mobility") mobility++;
       else other++;
       if (b.anyOutdoor) outdoor++;
       laughs += b.laughs;
@@ -207,6 +207,7 @@ function AthleteDetail() {
     return {
       strength,
       cardio,
+      mobility,
       other,
       outdoor,
       laughs,
