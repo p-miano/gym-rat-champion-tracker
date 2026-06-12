@@ -59,7 +59,7 @@ function getSubActivities(raw: unknown) {
 function AthleteDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(opts(id));
-  const { athlete, check_ins, month_results, awards } = data;
+  const { athlete, check_ins, month_results, awards, dataset_max_occurred_at } = data;
 
   // Ano em foco = ano mais recente com check-ins
   const year = useMemo(() => {
