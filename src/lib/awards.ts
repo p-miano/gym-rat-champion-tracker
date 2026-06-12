@@ -163,9 +163,12 @@ export function computeAwards(
     add("flexible_iron", winner, { matches: winner ? score.get(winner) : 0 });
   }
 
-  // 5. no_borders: distância > 50km do centróide pessoal
+  // 5. no_borders: check-ins fora da área usual (raio 30 km do cluster dominante)
   {
+    const GRID_DEG = 0.05; // ~5 km
+    const HOME_RADIUS_KM = 30;
     const score = new Map<string, number>();
+    const detailsByAthlete = new Map<string, { base_lat: number; base_lng: number; home_checkins: number }>();
     for (const [aid, list] of byAthlete) {
       const geo = list.filter(
         (c) => c.location_latitude != null && c.location_longitude != null,
@@ -174,20 +177,44 @@ export function computeAwards(
         score.set(aid, 0);
         continue;
       }
-      const cLat = geo.reduce((s, c) => s + (c.location_latitude ?? 0), 0) / geo.length;
-      const cLng = geo.reduce((s, c) => s + (c.location_longitude ?? 0), 0) / geo.length;
-      let n = 0;
+      // Agrupa em células de ~5 km e acha a mais populosa
+      const cells = new Map<string, typeof geo>();
+      for (const c of geo) {
+        const gLat = Math.round(c.location_latitude! / GRID_DEG);
+        const gLng = Math.round(c.location_longitude! / GRID_DEG);
+        const key = `${gLat}:${gLng}`;
+        const arr = cells.get(key) ?? [];
+        arr.push(c);
+        cells.set(key, arr);
+      }
+      let topCell: typeof geo = [];
+      for (const arr of cells.values()) if (arr.length > topCell.length) topCell = arr;
+      // Base = centróide só dos check-ins da célula dominante (ponto real)
+      const baseLat = topCell.reduce((s, c) => s + (c.location_latitude ?? 0), 0) / topCell.length;
+      const baseLng = topCell.reduce((s, c) => s + (c.location_longitude ?? 0), 0) / topCell.length;
+      let far = 0;
+      let home = 0;
       for (const c of geo) {
         const d = haversineKm(
-          { lat: cLat, lng: cLng },
+          { lat: baseLat, lng: baseLng },
           { lat: c.location_latitude!, lng: c.location_longitude! },
         );
-        if (d >= 50) n++;
+        if (d >= HOME_RADIUS_KM) far++;
+        else home++;
       }
-      score.set(aid, n);
+      score.set(aid, far);
+      detailsByAthlete.set(aid, {
+        base_lat: Number(baseLat.toFixed(4)),
+        base_lng: Number(baseLng.toFixed(4)),
+        home_checkins: home,
+      });
     }
     const winner = topByScore(score, activeDaysTotal);
-    add("no_borders", winner, { far_checkins: winner ? score.get(winner) : 0 });
+    const det = winner ? detailsByAthlete.get(winner) : undefined;
+    add("no_borders", winner, {
+      far_checkins: winner ? score.get(winner) : 0,
+      ...(det ?? {}),
+    });
   }
 
   // 6. wod_comedian: 😂 reactions
