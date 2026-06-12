@@ -5,7 +5,7 @@ import { Avatar } from "./index";
 
 const opts = () => queryOptions({ queryKey: ["athletes"], queryFn: () => listAthletes() });
 
-export const Route = createFileRoute("/atletas")({
+export const Route = createFileRoute("/atletas/")({
   head: () => ({ meta: [{ title: "Atletas — Atletas com Dorflex" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(opts()),
   component: AthletesIndex,

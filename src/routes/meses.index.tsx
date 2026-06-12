@@ -10,7 +10,7 @@ const MONTH_NAMES = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Jun
 
 const monthsOpts = () => queryOptions({ queryKey: ["months"], queryFn: () => listMonths() });
 
-export const Route = createFileRoute("/meses")({
+export const Route = createFileRoute("/meses/")({
   head: () => ({ meta: [{ title: "Meses — Atletas com Dorflex" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(monthsOpts()),
   component: MonthsPage,
