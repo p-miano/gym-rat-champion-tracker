@@ -52,8 +52,8 @@ function HomePage() {
         <div className="font-condensed text-xs text-primary uppercase">Temporada {SEASON_LABEL}</div>
         <h1 className="display mt-2 text-6xl md:text-8xl text-lime">Placar Geral</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Quem mais venceu meses leva a bolada, se aposenta, faz a viagem dos sonhos e manda
-          mensagem no Natal. O resto paga R$10. O lanterna paga R$20 e a vergonha.
+          Quem vencer mais meses leva a bolada, se aposenta, faz a viagem dos sonhos e manda
+          mensagem no Natal. O resto paga R$10. O lanterna paga R$20 e passa vergonha.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <Stat icon={<CalendarDays className="h-5 w-5" />} label="Meses Fechados" value={standing.months} />
