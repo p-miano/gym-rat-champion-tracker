@@ -21,6 +21,17 @@ const POOL: Record<string, string[]> = {
     "Treina onde tem mato, sol e poeira. Academia indoor que se cuide.",
     "Foto de treino com paisagem. Influencer de parquinho.",
   ],
+  no_borders: [
+    "Treina em qualquer CEP. Nômade fitness, vagabundo do whey.",
+    "Bate ponto em academia que nem sabia que existia.",
+    "Geolocalização do treino parece itinerário de companhia aérea.",
+  ],
+  wod_comedian: [
+    "Vira piada virou métrica. Parabéns, comediante de WOD.",
+    "O grupo ri mais do treino do que do seu progresso.",
+    "Mais 😂 que 🔥. Você é a atração principal do circo.",
+  ],
+
 
   mile_eater: [
     "Engole quilômetro como se fosse pão de queijo.",
