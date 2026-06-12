@@ -77,22 +77,47 @@ function AthleteDetail() {
     [check_ins, year],
   );
 
-  // ─── Meta semanal (3x/semana) ───────────────────────────────────────────
+  // ─── Meta semanal (3x/semana, sempre seg→dom) ──────────────────────────
+  // Enumeramos TODA semana ISO (segunda a domingo) que toca o ano em foco.
+  // Semanas ainda em curso (domingo no futuro) não entram no placar.
+  // Semanas com 0 check-ins contam como débito.
   const weekly = useMemo(() => {
-    const byWeek = new Map<string, Set<string>>();
-    for (const c of yearCheckIns) {
+    const daysWithCheckIn = new Set<string>();
+    for (const c of check_ins) {
       if (!c.is_valid) continue;
-      const wk = spWeekKey(c.occurred_at);
-      if (!byWeek.has(wk)) byWeek.set(wk, new Set());
-      byWeek.get(wk)!.add(spDateKey(c.occurred_at));
+      daysWithCheckIn.add(spDateKey(c.occurred_at));
     }
-    const weeks = [...byWeek.entries()]
-      .map(([wk, set]) => ({ wk, days: set.size, met: set.size >= 3 }))
-      .sort((a, b) => a.wk.localeCompare(b.wk));
-    const met = weeks.filter((w) => w.met).length;
-    const debt = weeks.filter((w) => !w.met).length;
-    return { weeks, met, debt };
-  }, [yearCheckIns]);
+    const fmtDay = (d: Date) =>
+      `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    // Segunda-feira da semana que contém 1º de janeiro
+    const jan1 = new Date(Date.UTC(year, 0, 1));
+    const jan1Dow = jan1.getUTCDay() || 7; // 1..7 (Mon..Sun)
+    const firstMonday = new Date(jan1);
+    firstMonday.setUTCDate(jan1.getUTCDate() - (jan1Dow - 1));
+    const dec31 = new Date(Date.UTC(year, 11, 31));
+    const todayKey = spDateKey(new Date().toISOString());
+
+    const weeks: { wk: string; mondayKey: string; sundayKey: string; days: number; met: boolean; complete: boolean }[] = [];
+    for (const mon = new Date(firstMonday); mon <= dec31; mon.setUTCDate(mon.getUTCDate() + 7)) {
+      const sun = new Date(mon);
+      sun.setUTCDate(mon.getUTCDate() + 6);
+      const mondayKey = fmtDay(mon);
+      const sundayKey = fmtDay(sun);
+      let n = 0;
+      const cur = new Date(mon);
+      for (let i = 0; i < 7; i++) {
+        if (daysWithCheckIn.has(fmtDay(cur))) n++;
+        cur.setUTCDate(cur.getUTCDate() + 1);
+      }
+      const complete = sundayKey < todayKey;
+      weeks.push({ wk: mondayKey, mondayKey, sundayKey, days: n, met: n >= 3, complete });
+    }
+    const evaluable = weeks.filter((w) => w.complete);
+    const met = evaluable.filter((w) => w.met).length;
+    const debt = evaluable.filter((w) => !w.met).length;
+    return { weeks, evaluableCount: evaluable.length, met, debt };
+  }, [check_ins, year]);
+
 
   // ─── Auditoria por categoria ────────────────────────────────────────────
   const audit = useMemo(() => {
