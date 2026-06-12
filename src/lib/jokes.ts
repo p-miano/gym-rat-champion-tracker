@@ -96,11 +96,6 @@ export const AWARD_META: Record<
     title: "Humorista do WOD",
     short: "Mais reações de risada nos treinos.",
   },
-  hypochondriac: {
-    emoji: "🩺",
-    title: "Hipocondríaco / Sobrevivente",
-    short: "Sinusite, virose, dorflex... e ainda treina.",
-  },
   mile_eater: {
     emoji: "🏃‍♀️",
     title: "Papa-Milhas",
