@@ -1,52 +1,69 @@
-# Fitness Sem Fronteiras — novo cálculo
+## Como o cardio é calculado hoje (e por que está furando)
 
-## Objetivo
+Em `src/lib/awards.ts`, o prêmio `cardio_king` chama `isCardio(...)` para cada check-in e conta os que voltam `true`. Em paralelo, `bodybuilding_beast` chama `isStrength(...)`. As duas funções são **independentes** — o mesmo check-in pode bater nas duas.
 
-Para cada atleta, descobrir a **área usual** (onde ele treina no dia-a-dia) e contar quantos check-ins foram feitos **fora dela**. Ganha quem mais "treinou viajando". O método atual (centróide aritmético) falha quando o atleta tem dois polos frequentes — a média cai num ponto fantasma e tudo vira "fora".
+`isCardio` (definida em `src/lib/gymrats-parser.ts`) usa uma cascata:
 
-## Regra proposta
+1. **Camada 1 — tipo nativo:** `activity_type` ∈ {running, walking, treadmill, cycling, swimming}.
+2. **Camada 2 — atividades internas:** qualquer item de `check_in_activities[].platform_activity` casando `/treadmill|running|elliptical/`.
+3. **Camada 3 — texto:** título/descrição contendo "corrida", "esteira", "cardio", "pedal", "escada", "elíptico" etc.
 
-Para cada atleta com ≥ 3 check-ins geolocalizados no ano:
+`isStrength` segue lógica análoga: `activity_type` ∈ {weightlifting, strength_training, lpo} OU texto com "musculação", "supino", "perna", "hipertrofia".
 
-1. **Encontrar a base pessoal (centro da área usual):**
-   - Arredondar cada check-in numa grade de ~5 km (≈ 0,05° de lat/lng).
-   - A célula com mais check-ins é o "polo principal". Usar o **centróide só dos check-ins dessa célula** como base — assim a base é um ponto real onde a pessoa de fato treina, não uma média entre cidades.
+### Exemplo do bug (dado real do banco)
 
-2. **Definir a área usual:** círculo de **30 km** de raio em torno dessa base.
-   - 30 km cobre deslocamento normal dentro de uma cidade/região metropolitana (academias, parques, casa de parentes no mesmo eixo).
-   - Acima disso, já é "viagem" pelo critério do prêmio.
+Check-in "Inferior + esteira" do Gabriel (1º/maio):
+- `activity_type = null`
+- `check_in_activities = [{ platform_activity: "strength_training", duration_millis: 3.895.000 }, { platform_activity: "treadmill", duration_millis: 1.227.000 }]`
 
-3. **Pontuação:** número de check-ins ≥ 30 km da base.
+Hoje:
+- `isCardio` → **true** (Camada 2 viu "treadmill")
+- `isStrength` → **true** (Camada 1 viu "strength_training" entre os platform_activities? Não — `isStrength` só olha `activity_type`, que é null. Olha o texto: "inferior" + "esteira" → "perna"/"musculação" não batem, então hoje retorna **false**.)
 
-4. **Vencedor:** maior pontuação. Empate desempata por total de dias ativos no ano (igual hoje).
+Resultado atual desse check-in: vai pro Cardio, não vai pro Marombeiro. Mas o atleta ficou **65 min de musculação contra 20 min de esteira** — deveria ser Marombeiro.
 
-5. **Detalhes salvos** em `annual_awards.details` para exibição no card:
-   - `far_checkins`: nº de check-ins fora da área usual
-   - `base_lat`, `base_lng`: a base pessoal usada
-   - `home_checkins`: nº de check-ins dentro da área usual (pra dar contexto)
+E há o caso simétrico (texto "musculação + corridinha rápida") que cai nos dois, dependendo de o `activity_type` ser preenchido.
 
-## Aplicação no caso da Amanda (validação)
+## Regra nova (sua proposta, formalizada)
 
-- 57 check-ins, 2 clusters: ~45 em Campinas e ~12 em João Pessoa.
-- Cluster dominante: Campinas → base ≈ (−22.81, −47.23).
-- Check-ins dentro de 30 km de Campinas: ~45 → "casa".
-- Check-ins ≥ 30 km: ~12 (os de João Pessoa) → **pontuação = 12**.
-- Bate com a intuição: ela viajou pra PB e treinou lá → conta como "sem fronteiras".
+Cada check-in tem **no máximo uma categoria** entre `strength` e `cardio` (pode não ter nenhuma — outras modalidades não mudam). A decisão é por **tempo da atividade dominante**:
 
-## Detalhes técnicos
+1. Para cada item de `check_in_activities`, classifique pelo `platform_activity`:
+   - **cardio:** treadmill, running, walking, cycling, indoor_cycling, elliptical, swimming, stairs, rowing, hiking
+   - **strength:** strength_training, weightlifting, lpo, weight_lifting, functional_strength
+   - **outro:** não conta nas duas categorias
+2. Some `duration_millis` por categoria dentro do check-in. A categoria com **maior tempo** ganha o check-in. Empate → cardio perde (vai pra força, porque musculação é a "base" do treino combinado; podemos inverter se preferir).
+3. **Fallback** quando `check_in_activities` está vazio ou só tem itens "outro":
+   - Usa a cascata atual (`activity_type` → texto) mas roda **strength primeiro**; se bater strength, o check-in **não** é cardio. Se não bater strength, aplica `isCardio` como hoje.
 
-- **Arquivo único alterado:** `src/lib/awards.ts`, regra `no_borders` (item 5).
-- Constantes locais à regra: `GRID_DEG = 0.05` (≈ 5 km), `HOME_RADIUS_KM = 30`.
-- Reaproveitar `haversineKm` existente. Sem nova dependência.
-- O recálculo dispara automaticamente na próxima importação de mês (não muda o fluxo). Pra recalcular já, basta reimportar qualquer mês de 2026/2027 — o `computeAwards` é chamado a cada import e sobrescreve `annual_awards` do ano.
-- Sem migração de banco. Sem mudança na UI (o card já mostra `details.far_checkins`).
+Resultado para "Inferior + esteira": força 65 min × cardio 20 min → **Marombeiro** ✅. O cardio_king perde esse check-in.
 
-## Fora do escopo
+## Mudanças no código
 
-- Não toco em outros prêmios.
-- Não mudo a forma como os detalhes são renderizados no card (só passo a ter números mais realistas).
-- Não cadastro "cidade-base" manual por atleta — fica 100% automático a partir dos check-ins.
+**`src/lib/gymrats-parser.ts`** (uma adição, sem mexer nas funções existentes):
+
+- Nova função `classifyCheckInExclusive(input)` que devolve `"strength" | "cardio" | "other"`.
+- Recebe `activity_type`, `title`, `description` e `check_in_activities` (array com `platform_activity` + `duration_millis`).
+- Implementa a regra acima.
+- Mantém `isCardio` / `isStrength` / `isOutdoor` exportadas (outras partes podem usar; `isOutdoor` continua independente — um treino na rua pode ser cardio OU força).
+
+**`src/lib/awards.ts`**:
+
+- Estender `AwardCheckIn` com `check_in_activities` (extraído do `raw` já carregado).
+- Em `cardio_king` e `bodybuilding_beast`, trocar `isCardio(...)` / `isStrength(...)` pela classificação exclusiva: incrementa força se `classify === "strength"`, cardio se `classify === "cardio"`.
+- `nature_lover` continua usando `isOutdoor` (independente).
+- Desempates seguem iguais (minutos totais para força, km total para cardio).
+
+**`src/lib/import.functions.ts`**: nenhuma alteração de schema. O `select` já traz `raw`, de onde a engine extrai `check_in_activities`.
+
+## Recálculo
+
+Depois das mudanças, rodar recálculo server-side para 2026 (mesmo fluxo da última vez, via `recomputeAwardsForYear`). Esperado: Marombeiro provavelmente cresce, Cardio cai um pouco; nenhum atleta vai aparecer nas duas listas.
 
 ## Pergunta antes de implementar
 
-O raio de **30 km** te parece bom pra "área usual"? Alternativas razoáveis: 20 km (mais rigoroso, conta como "viagem" qualquer treino na grande SP partindo do centro) ou 50 km (mantém o threshold atual, só muda a base). Posso seguir com 30 km se você não disser nada.
+Em caso de **empate exato** de tempo entre força e cardio no mesmo check-in, o que prefere?
+
+- a) Vai pra **força** (assumo isso por padrão se você não responder — musculação tende a ser a parte estruturada do treino).
+- b) Vai pra **cardio**.
+- c) Não conta em nenhuma das duas categorias.
