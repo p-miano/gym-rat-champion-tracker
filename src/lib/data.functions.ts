@@ -88,13 +88,20 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
         wins: [] as any[],
         lasts_total: 0,
         lasts: [] as any[],
+        awards: [] as any[],
         pot: 0,
       };
     }
-    const { data: results } = await supabaseAdmin
-      .from("month_results")
-      .select("month_id, athlete_id, is_winner, is_last, active_days, athletes(id, full_name, profile_picture_url)")
-      .in("month_id", monthIds);
+    const [{ data: results }, { data: awardsRaw }] = await Promise.all([
+      supabaseAdmin
+        .from("month_results")
+        .select("month_id, athlete_id, is_winner, is_last, active_days, athletes(id, full_name, profile_picture_url)")
+        .in("month_id", monthIds),
+      supabaseAdmin
+        .from("annual_awards")
+        .select("award_key, athlete_id, details, athletes(id, full_name, profile_picture_url)")
+        .eq("year", data.year),
+    ]);
 
     const wins = new Map<string, { count: number; athlete: any }>();
     const lasts = new Map<string, { count: number; athlete: any }>();
