@@ -100,7 +100,7 @@ function AthleteDetail() {
         <div className="mt-3 flex items-center gap-4">
           <Avatar src={athlete.profile_picture_url} name={athlete.full_name} size={88} />
           <div>
-            <h1 className="display text-4xl text-lime-glow">{athlete.full_name}</h1>
+            <h1 className="display text-4xl text-lime">{athlete.full_name}</h1>
             <div className="mt-1 flex flex-wrap gap-2">
               {dnaTag && <Badge variant="secondary">{dnaTag}</Badge>}
               {monthsWon > 0 && (
@@ -201,7 +201,7 @@ function AthleteDetail() {
                   <div className="flex items-start gap-3">
                     <div className="text-3xl">{meta.emoji}</div>
                     <div className="flex-1">
-                      <div className="display text-lg text-lime-glow">{meta.title}</div>
+                      <div className="display text-lg text-lime">{meta.title}</div>
                       <div className="text-xs text-muted-foreground">{meta.short}</div>
                       <div className="mt-2 text-sm italic">"{jokeFor(a.award_key, athlete.id)}"</div>
                     </div>
@@ -255,7 +255,7 @@ function Stat({ label, value, highlight, danger }: { label: string; value: React
   return (
     <div className={`rounded-xl border p-4 ${highlight ? "border-primary/40 bg-primary/10" : danger ? "border-destructive/30 bg-destructive/5" : "border-border bg-card/60"}`}>
       <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-1 display text-3xl ${highlight ? "text-lime-glow" : ""}`}>{value}</div>
+      <div className={`mt-1 display text-3xl ${highlight ? "text-lime" : ""}`}>{value}</div>
     </div>
   );
 }

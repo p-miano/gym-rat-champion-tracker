@@ -91,7 +91,7 @@ function ImportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="display text-4xl text-lime-glow">Importar JSON do Gym Rats</h1>
+        <h1 className="display text-4xl text-lime">Importar JSON do Gym Rats</h1>
         <p className="text-muted-foreground">Arrasta o arquivo do mês ou clica pra escolher.</p>
       </div>
 

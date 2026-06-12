@@ -26,7 +26,7 @@ export function SiteHeader() {
             <Dumbbell className="h-5 w-5" />
           </div>
           <div className="leading-tight">
-            <div className="display text-lg text-lime-glow">Atletas com Dorflex</div>
+            <div className="display text-lg text-lime">Atletas com Dorflex</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
               placar anual · 2026
             </div>

@@ -42,7 +42,7 @@ function HomePage() {
     <div className="space-y-10">
       <section className="grid-bg rounded-2xl border border-border bg-card/40 p-8 md:p-12">
         <div className="text-xs uppercase tracking-[0.3em] text-primary/80">Temporada {YEAR}</div>
-        <h1 className="display mt-2 text-5xl md:text-7xl text-lime-glow">Hall da Fama</h1>
+        <h1 className="display mt-2 text-5xl md:text-7xl text-lime">Hall da Fama</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Quem mais venceu meses leva a bolada, se aposenta, faz a viagem dos sonhos e manda
           mensagem no Natal. O resto paga R$10. O lanterna paga R$20 e a vergonha.
@@ -119,7 +119,7 @@ function Stat({
       <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
         {icon} {label}
       </div>
-      <div className={`mt-2 display text-4xl ${highlight ? "text-lime-glow" : ""}`}>{value}</div>
+      <div className={`mt-2 display text-4xl ${highlight ? "text-lime" : ""}`}>{value}</div>
     </div>
   );
 }
@@ -143,7 +143,7 @@ function PodiumCard({ place, wins, athlete }: { place: number; wins: number; ath
   return (
     <Link to="/atletas/$id" params={{ id: athlete?.id ?? "" }}>
       <div className={`rounded-2xl border p-6 text-center transition-all ${colors[place]} ${sizes[place] ?? ""}`}>
-        <div className="display text-5xl text-lime-glow">{place === 1 ? "🥇" : place === 2 ? "🥈" : "🥉"}</div>
+        <div className="display text-5xl text-lime">{place === 1 ? "🥇" : place === 2 ? "🥈" : "🥉"}</div>
         <div className="mt-3 flex justify-center">
           <Avatar src={athlete?.profile_picture_url} name={athlete?.full_name} size={64} />
         </div>

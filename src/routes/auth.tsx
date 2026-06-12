@@ -52,7 +52,7 @@ function AuthPage() {
     <div className="mx-auto max-w-md">
       <Card>
         <CardHeader>
-          <CardTitle className="display text-3xl text-lime-glow">
+          <CardTitle className="display text-3xl text-lime">
             {mode === "signin" ? "Entrar" : "Criar conta"}
           </CardTitle>
           <CardDescription>

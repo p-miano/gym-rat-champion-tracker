@@ -15,7 +15,7 @@ function AthletesIndex() {
   const { data: athletes } = useSuspenseQuery(opts());
   return (
     <div className="space-y-6">
-      <h1 className="display text-4xl text-lime-glow">Atletas com Dorflex</h1>
+      <h1 className="display text-4xl text-lime">Atletas com Dorflex</h1>
       {athletes.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
           Nenhum atleta ainda. Importe um mês primeiro.
