@@ -5,7 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Bebas Neue", "Impact", system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Oswald", "Impact", system-ui, sans-serif;
+  --font-condensed: "Oswald", "Barlow Condensed", "Impact", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
