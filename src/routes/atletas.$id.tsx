@@ -367,17 +367,19 @@ function AthleteDetail() {
       <section>
         <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
         <p className="mb-3 text-xs text-muted-foreground">
-          Números brutos que alimentam cada categoria de prêmio. Cada check-in conta UMA categoria
-          (musculação ou cardio): se o treino tiver as duas, vence a de maior duração; empate vai
-          pra musculação. Musculação + Cardio + Outros = Total de Check-ins.
+          A unidade de medida é o <strong>Dia Ativo</strong>: vários check-ins no mesmo dia viram 1
+          sessão. Cada dia conta UMA categoria — somamos a duração de musculação vs cardio das
+          sub-atividades do dia; vence a maior, empate vai pra musculação.
+          Musculação + Cardio + Outros = Dias Ativos.
         </p>
         <div className="overflow-hidden rounded-xl border border-border">
           <AuditRow
             icon={<Activity className="h-4 w-4 text-primary" />}
-            label="Total de Check-ins no ano"
-            sub={`${audit.activeDays} dias ativos únicos (alguns dias com 2+ treinos)`}
-            value={audit.totalCheckIns}
+            label="Dias Ativos no ano"
+            sub="cada dia com pelo menos 1 check-in válido"
+            value={audit.activeDays}
           />
+
           <AuditRow
             icon={<Dumbbell className="h-4 w-4 text-primary" />}
             label="Treinos de Musculação"
