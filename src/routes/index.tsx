@@ -193,8 +193,8 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
           </Link>
         ))}
       </div>
-      <div className="mt-3 font-condensed text-sm text-muted-foreground">
-        {wins} {wins === 1 ? "vitória" : "vitórias"}{athletes.length > 1 ? ` · empate (${athletes.length})` : ""}
+      <div className="mt-3 font-condensed text-sm text-muted-foreground uppercase">
+        {wins} {wins === 1 ? "vitória" : "vitórias"}
       </div>
     </div>
   );
