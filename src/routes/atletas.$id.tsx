@@ -98,6 +98,7 @@ function AthleteDetail() {
   const audit = useMemo(() => {
     let strength = 0;
     let cardio = 0;
+    let other = 0;
     let outdoor = 0;
     let laughs = 0;
     let totalKm = 0;
@@ -105,6 +106,9 @@ function AthleteDetail() {
     const activeDays = new Set<string>();
     for (const c of yearCheckIns) {
       if (c.is_valid) activeDays.add(spDateKey(c.occurred_at));
+      // Regra de exclusividade: cada check-in conta UMA categoria.
+      // Se houver musculação E cardio no mesmo check-in, vence a de maior duração.
+      // Empate → musculação (default).
       const cat = classifyCheckInExclusive({
         activity_type: c.activity_type,
         title: c.title,
@@ -113,6 +117,7 @@ function AthleteDetail() {
       });
       if (cat === "strength") strength++;
       else if (cat === "cardio") cardio++;
+      else other++;
       if (
         isOutdoor({
           activity_type: c.activity_type,
@@ -129,11 +134,13 @@ function AthleteDetail() {
     return {
       strength,
       cardio,
+      other,
       outdoor,
       laughs,
       totalKm,
       totalMin,
       activeDays: activeDays.size,
+      totalCheckIns: yearCheckIns.length,
     };
   }, [yearCheckIns]);
 
@@ -334,9 +341,17 @@ function AthleteDetail() {
       <section>
         <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
         <p className="mb-3 text-xs text-muted-foreground">
-          Números brutos que alimentam cada categoria de prêmio. Sem moleza, sem desconfiança.
+          Números brutos que alimentam cada categoria de prêmio. Cada check-in conta UMA categoria
+          (musculação ou cardio): se o treino tiver as duas, vence a de maior duração; empate vai
+          pra musculação. Musculação + Cardio + Outros = Total de Check-ins.
         </p>
         <div className="overflow-hidden rounded-xl border border-border">
+          <AuditRow
+            icon={<Activity className="h-4 w-4 text-primary" />}
+            label="Total de Check-ins no ano"
+            sub={`${audit.activeDays} dias ativos únicos (alguns dias com 2+ treinos)`}
+            value={audit.totalCheckIns}
+          />
           <AuditRow
             icon={<Dumbbell className="h-4 w-4 text-primary" />}
             label="Treinos de Musculação"
@@ -348,6 +363,12 @@ function AthleteDetail() {
             label="Treinos de Cardio"
             sub="alimenta o Inimigo do Cardiologista 🫀"
             value={audit.cardio}
+          />
+          <AuditRow
+            icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+            label="Treinos sem categoria"
+            sub="não bate nem em musculação nem em cardio"
+            value={audit.other}
           />
           <AuditRow
             icon={<Trees className="h-4 w-4 text-primary" />}
