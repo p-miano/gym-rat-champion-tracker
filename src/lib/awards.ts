@@ -1,13 +1,18 @@
 // Engine de prêmios. Funções puras sobre os check-ins do ano.
 import {
+  classifyCheckInExclusive,
   extractPlatformActivities,
-  isCardio,
   isOutdoor,
-  isStrength,
   spDateKey,
   spHour,
   spWeekKey,
 } from "./gymrats-parser";
+
+function getSubActivities(raw: unknown): Array<{ platform_activity?: string | null; duration_millis?: number | null }> {
+  const r = raw as { check_in_activities?: unknown } | null | undefined;
+  const arr = r?.check_in_activities;
+  return Array.isArray(arr) ? (arr as Array<{ platform_activity?: string | null; duration_millis?: number | null }>) : [];
+}
 
 export interface AwardCheckIn {
   athlete_id: string;
@@ -121,51 +126,36 @@ export function computeAwards(checkIns: AwardCheckIn[]): AwardResult[] {
     add("voucher_limit", winner, { weeks_at_three: winner ? score.get(winner) : 0 });
   }
 
-  // 2. bodybuilding_beast: maior nº de treinos de musculação/força
+  // 2 & 3. bodybuilding_beast × cardio_king (classificação exclusiva por check-in)
   {
-    const score = new Map<string, number>();
+    const strengthScore = new Map<string, number>();
+    const cardioScore = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
-      let n = 0;
+      let s = 0;
+      let k = 0;
       for (const c of list) {
-        if (
-          isStrength({
-            activity_type: c.activity_type,
-            title: c.title,
-            description: c.description,
-            platform_activities: extractPlatformActivities(c.raw),
-          })
-        )
-          n++;
+        const cat = classifyCheckInExclusive({
+          activity_type: c.activity_type,
+          title: c.title,
+          description: c.description,
+          check_in_activities: getSubActivities(c.raw),
+        });
+        if (cat === "strength") s++;
+        else if (cat === "cardio") k++;
       }
-      score.set(aid, n);
+      strengthScore.set(aid, s);
+      cardioScore.set(aid, k);
     }
-    const winner = topByScore(score, totalMinutes);
-    add("bodybuilding_beast", winner, {
-      strength_checkins: winner ? score.get(winner) : 0,
+    const sWinner = topByScore(strengthScore, totalMinutes);
+    add("bodybuilding_beast", sWinner, {
+      strength_checkins: sWinner ? strengthScore.get(sWinner) : 0,
+    });
+    const cWinner = topByScore(cardioScore, totalKm);
+    add("cardio_king", cWinner, {
+      cardio_checkins: cWinner ? cardioScore.get(cWinner) : 0,
     });
   }
 
-  // 3. cardio_king: maior nº de treinos de cardio
-  {
-    const score = new Map<string, number>();
-    for (const [aid, list] of byAthlete) {
-      let n = 0;
-      for (const c of list) {
-        if (
-          isCardio({
-            activity_type: c.activity_type,
-            title: c.title,
-            description: c.description,
-            platform_activities: extractPlatformActivities(c.raw),
-          })
-        )
-          n++;
-      }
-      score.set(aid, n);
-    }
-    const winner = topByScore(score, totalKm);
-    add("cardio_king", winner, { cardio_checkins: winner ? score.get(winner) : 0 });
-  }
 
   // 4. nature_lover: maior nº de check-ins ao ar livre
   {

@@ -188,6 +188,80 @@ export function isStrength(c: ClassifyInput): boolean {
   return STRENGTH_TEXT_RE.test(blob);
 }
 
+// Classificação exclusiva strength × cardio por check-in.
+// Soma a duração das sub-atividades (check_in_activities) por categoria; vence a maior.
+// Empate ou ausência de sub-atividades cai pra cascata textual com strength tendo precedência.
+const CARDIO_PLATFORMS = new Set([
+  "treadmill",
+  "running",
+  "walking",
+  "cycling",
+  "indoor_cycling",
+  "elliptical",
+  "swimming",
+  "stairs",
+  "rowing",
+  "hiking",
+]);
+const STRENGTH_PLATFORMS = new Set([
+  "strength_training",
+  "weightlifting",
+  "weight_lifting",
+  "lpo",
+  "functional_strength_training",
+  "functional_strength",
+]);
+
+export type ExclusiveCategory = "strength" | "cardio" | "other";
+
+export interface ExclusiveClassifyInput {
+  activity_type: string | null;
+  title: string | null;
+  description: string | null;
+  check_in_activities: Array<{
+    platform_activity?: string | null;
+    duration_millis?: number | null;
+  }> | null;
+}
+
+export function classifyCheckInExclusive(
+  c: ExclusiveClassifyInput,
+): ExclusiveCategory {
+  // Etapa 1: olhar as sub-atividades com duração
+  const subs = Array.isArray(c.check_in_activities) ? c.check_in_activities : [];
+  let strengthMs = 0;
+  let cardioMs = 0;
+  let sawClassified = false;
+  for (const s of subs) {
+    const p = (s.platform_activity ?? "").toString().toLowerCase();
+    const ms = Number(s.duration_millis ?? 0) || 0;
+    if (STRENGTH_PLATFORMS.has(p)) {
+      strengthMs += ms;
+      sawClassified = true;
+    } else if (CARDIO_PLATFORMS.has(p)) {
+      cardioMs += ms;
+      sawClassified = true;
+    }
+  }
+  if (sawClassified && (strengthMs > 0 || cardioMs > 0)) {
+    // Empate → strength (musculação é a base do treino combinado)
+    return strengthMs >= cardioMs ? "strength" : "cardio";
+  }
+
+  // Etapa 2: fallback texto/activity_type. Strength tem precedência sobre cardio.
+  const input: ClassifyInput = {
+    activity_type: c.activity_type,
+    title: c.title,
+    description: c.description,
+    platform_activities: subs
+      .map((s) => (s.platform_activity ?? "").toString().toLowerCase())
+      .filter((p) => p.length > 0),
+  };
+  if (isStrength(input)) return "strength";
+  if (isCardio(input)) return "cardio";
+  return "other";
+}
+
 export function validateCheckIn(_c: {
   has_photo: boolean;
   duration_min: number | null;
