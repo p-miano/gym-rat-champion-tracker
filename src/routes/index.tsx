@@ -84,36 +84,80 @@ function HomePage() {
         )}
       </section>
 
-      {(standing.active_days_ranking ?? []).length > 0 && (
-        <section>
-          <SectionTitle icon={<Flame className="h-5 w-5" />}>Ranking geral · dias ativos</SectionTitle>
-          <div className="overflow-hidden border-2 border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary/60 font-condensed text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="w-12 px-3 py-2 text-left">#</th>
-                  <th className="px-3 py-2 text-left">Atleta</th>
-                  <th className="px-3 py-2 text-right">Dias ativos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standing.active_days_ranking.map((row: any, i: number) => (
-                  <tr key={row.athlete_id} className="border-t border-border/60">
-                    <td className="px-3 py-2 font-condensed text-lg text-lime">{i + 1}</td>
-                    <td className="px-3 py-2">
-                      <Link to="/atletas/$id" params={{ id: row.athlete_id }} className="flex items-center gap-3 hover:underline">
-                        <Avatar src={row.athlete?.profile_picture_url} name={row.athlete?.full_name} size={32} />
-                        <span className="font-medium">{row.athlete?.full_name}</span>
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2 text-right font-condensed text-xl">{row.active_days}</td>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {(standing.active_days_ranking ?? []).length > 0 && (
+          <section>
+            <SectionTitle icon={<Flame className="h-5 w-5" />}>Ranking geral · dias ativos</SectionTitle>
+            <div className="overflow-hidden border-2 border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary/60 font-condensed text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="w-12 px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Atleta</th>
+                    <th className="px-3 py-2 text-right">Dias ativos</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {standing.active_days_ranking.map((row: any, i: number) => (
+                    <tr key={row.athlete_id} className="border-t border-border/60">
+                      <td className="px-3 py-2 font-condensed text-lg text-lime">{i + 1}</td>
+                      <td className="px-3 py-2">
+                        <Link to="/atletas/$id" params={{ id: row.athlete_id }} className="flex items-center gap-3 hover:underline">
+                          <Avatar src={row.athlete?.profile_picture_url} name={row.athlete?.full_name} size={32} />
+                          <span className="font-medium">{row.athlete?.full_name}</span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2 text-right font-condensed text-xl">{row.active_days}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        <section>
+          <SectionTitle icon={<Award className="h-5 w-5" />}>Categorias anuais</SectionTitle>
+          {(standing.awards ?? []).length === 0 ? (
+            <Empty>Ainda sem categorias decididas.</Empty>
+          ) : (
+            <div className="grid gap-3">
+              {(standing.awards ?? []).map((a: any) => {
+                const meta = AWARD_META[a.award_key];
+                if (!meta) return null;
+                const detailEntry = a.details ? Object.entries(a.details)[0] : null;
+                return (
+                  <div key={a.award_key} className="border-2 border-primary/40 bg-primary/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">{meta.emoji}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="display text-lg text-lime">{meta.title}</div>
+                        <div className="text-xs text-muted-foreground">{meta.short}</div>
+                        {a.athlete && (
+                          <Link
+                            to="/atletas/$id"
+                            params={{ id: a.athlete_id }}
+                            className="mt-3 flex items-center gap-2 hover:underline"
+                          >
+                            <Avatar src={a.athlete?.profile_picture_url} name={a.athlete?.full_name} size={28} />
+                            <span className="font-medium truncate">{a.athlete?.full_name}</span>
+                            {detailEntry && (
+                              <span className="ml-auto font-condensed text-xs uppercase tracking-wider text-muted-foreground">
+                                {String(detailEntry[1])} {String(detailEntry[0]).replace(/_/g, " ")}
+                              </span>
+                            )}
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
-      )}
+      </div>
+
 
       {(standing.lasts ?? []).length > 0 && (
         <section>
