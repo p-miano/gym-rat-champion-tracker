@@ -77,39 +77,63 @@ function AthleteDetail() {
   );
 
   // ─── Meta semanal (3x/semana, sempre seg→dom) ──────────────────────────
-  // Enumeramos TODA semana ISO (segunda a domingo) que toca o ano em foco.
-  // Semanas ainda em curso (domingo no futuro) não entram no placar.
-  // Semanas com 0 check-ins contam como débito.
+  // Desafio começou em 01/04/2026. Só avaliamos semanas a partir daí.
+  // Semana de transição (a que contém 01/04) tem meta reduzida = 1 dia.
+  // Limite dinâmico = data do check-in mais recente no dataset importado.
+  // Semanas após esse limite não são avaliadas (ficam cinza "em curso").
   const weekly = useMemo(() => {
+    const CHALLENGE_START = "2026-04-01"; // quarta-feira
     const daysWithCheckIn = new Set<string>();
+    let maxKey = "";
     for (const c of check_ins) {
       if (!c.is_valid) continue;
-      daysWithCheckIn.add(spDateKey(c.occurred_at));
+      const k = spDateKey(c.occurred_at);
+      daysWithCheckIn.add(k);
+      if (k > maxKey) maxKey = k;
     }
+    const todayKey = spDateKey(new Date().toISOString());
+    // Limite = menor entre hoje e último check-in importado (não passa de hoje)
+    const cutoffKey = maxKey && maxKey < todayKey ? maxKey : todayKey;
+
     const fmtDay = (d: Date) =>
       `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-    // Segunda-feira da semana que contém 1º de janeiro
-    const jan1 = new Date(Date.UTC(year, 0, 1));
-    const jan1Dow = jan1.getUTCDay() || 7; // 1..7 (Mon..Sun)
-    const firstMonday = new Date(jan1);
-    firstMonday.setUTCDate(jan1.getUTCDate() - (jan1Dow - 1));
-    const dec31 = new Date(Date.UTC(year, 11, 31));
-    const todayKey = spDateKey(new Date().toISOString());
+    const fmtBR = (key: string) => `${key.slice(8, 10)}/${key.slice(5, 7)}`;
 
-    const weeks: { wk: string; mondayKey: string; sundayKey: string; days: number; met: boolean; complete: boolean }[] = [];
+    // Segunda-feira da semana que contém 01/04/2026 (= 30/03/2026)
+    const [sy, sm, sd] = CHALLENGE_START.split("-").map(Number);
+    const startDate = new Date(Date.UTC(sy, sm - 1, sd));
+    const startDow = startDate.getUTCDay() || 7;
+    const firstMonday = new Date(startDate);
+    firstMonday.setUTCDate(startDate.getUTCDate() - (startDow - 1));
+    const dec31 = new Date(Date.UTC(year, 11, 31));
+
+    const weeks: {
+      wk: string; mondayKey: string; sundayKey: string;
+      mondayBR: string; sundayBR: string;
+      days: number; goal: number; met: boolean; complete: boolean; transition: boolean;
+    }[] = [];
     for (const mon = new Date(firstMonday); mon <= dec31; mon.setUTCDate(mon.getUTCDate() + 7)) {
       const sun = new Date(mon);
       sun.setUTCDate(mon.getUTCDate() + 6);
       const mondayKey = fmtDay(mon);
       const sundayKey = fmtDay(sun);
+      // Pula semanas inteiramente posteriores ao cutoff (sem dados nem hoje)
+      if (mondayKey > cutoffKey) break;
       let n = 0;
       const cur = new Date(mon);
       for (let i = 0; i < 7; i++) {
         if (daysWithCheckIn.has(fmtDay(cur))) n++;
         cur.setUTCDate(cur.getUTCDate() + 1);
       }
-      const complete = sundayKey < todayKey;
-      weeks.push({ wk: mondayKey, mondayKey, sundayKey, days: n, met: n >= 3, complete });
+      const transition = mondayKey <= CHALLENGE_START && sundayKey >= CHALLENGE_START;
+      const goal = transition ? 1 : 3;
+      // Semana só é "completa" (avaliável) se o domingo já passou E está dentro do cutoff
+      const complete = sundayKey <= cutoffKey && sundayKey < todayKey;
+      weeks.push({
+        wk: mondayKey, mondayKey, sundayKey,
+        mondayBR: fmtBR(mondayKey), sundayBR: fmtBR(sundayKey),
+        days: n, goal, met: n >= goal, complete, transition,
+      });
     }
     const evaluable = weeks.filter((w) => w.complete);
     const met = evaluable.filter((w) => w.met).length;
@@ -492,10 +516,10 @@ function AthleteDetail() {
                 return (
                   <div
                     key={w.wk}
-                    title={`Semana ${w.mondayKey} → ${w.sundayKey} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"}${w.complete ? "" : " · em curso"}`}
-                    className={`flex h-9 min-w-[44px] items-center justify-center rounded-md border px-2 font-mono text-xs ${cls}`}
+                    title={`Semana ${w.mondayBR} → ${w.sundayBR} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"} · meta ${w.goal}${w.transition ? " (transição)" : ""}${w.complete ? "" : " · em curso"}`}
+                    className={`flex h-9 min-w-[52px] items-center justify-center rounded-md border px-2 font-mono text-xs ${cls}`}
                   >
-                    {w.mondayKey.slice(5)} · {w.days}d
+                    {w.mondayBR} · {w.days}d
                   </div>
                 );
               })}
