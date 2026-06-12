@@ -71,13 +71,13 @@ function HomePage() {
         )}
       </section>
 
-      {standing.lasts.length > 0 && (
+      {(standing.lasts ?? []).length > 0 && (
         <section>
           <SectionTitle icon={<Skull className="h-5 w-5" />}>
             Clientes Ouro do Dorflex 💊
           </SectionTitle>
           <div className="flex flex-wrap gap-3">
-            {standing.lasts.map((l) => (
+            {(standing.lasts ?? []).map((l: any) => (
               <Link key={l.athlete_id} to="/atletas/$id" params={{ id: l.athlete_id }}>
                 <div className="flex items-center gap-3 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm transition-colors hover:bg-destructive/20">
                   <Avatar src={l.athlete?.profile_picture_url} name={l.athlete?.full_name} size={28} />
