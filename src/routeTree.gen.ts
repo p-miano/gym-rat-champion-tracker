@@ -43,14 +43,14 @@ const AtletasIndexRoute = AtletasIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MesesIdRoute = MesesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MesesRoute,
+  id: '/meses/$id',
+  path: '/meses/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AtletasIdRoute = AtletasIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AtletasRoute,
+  id: '/atletas/$id',
+  path: '/atletas/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -115,6 +115,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ImportarRoute: typeof ImportarRoute
+  AtletasIdRoute: typeof AtletasIdRoute
+  MesesIdRoute: typeof MesesIdRoute
   AtletasIndexRoute: typeof AtletasIndexRoute
   MesesIndexRoute: typeof MesesIndexRoute
 }
@@ -158,17 +160,17 @@ declare module '@tanstack/react-router' {
     }
     '/meses/$id': {
       id: '/meses/$id'
-      path: '/$id'
+      path: '/meses/$id'
       fullPath: '/meses/$id'
       preLoaderRoute: typeof MesesIdRouteImport
-      parentRoute: typeof MesesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/atletas/$id': {
       id: '/atletas/$id'
-      path: '/$id'
+      path: '/atletas/$id'
       fullPath: '/atletas/$id'
       preLoaderRoute: typeof AtletasIdRouteImport
-      parentRoute: typeof AtletasRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -177,19 +179,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ImportarRoute: ImportarRoute,
+  AtletasIdRoute: AtletasIdRoute,
+  MesesIdRoute: MesesIdRoute,
   AtletasIndexRoute: AtletasIndexRoute,
   MesesIndexRoute: MesesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
