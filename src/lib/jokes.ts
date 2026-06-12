@@ -121,12 +121,11 @@ export const AWARD_META: Record<
 // Rótulos PT-BR para as chaves de `details` salvas em annual_awards.
 export const DETAIL_LABELS: Record<string, { singular: string; plural: string }> = {
   weeks_at_three: { singular: "semana no limite", plural: "semanas no limite" },
-  compressed_weeks: { singular: "semana comprimida", plural: "semanas comprimidas" },
-  times_last: { singular: "vez na lanterna", plural: "vezes na lanterna" },
-  matches: { singular: "treino flexível", plural: "treinos flexíveis" },
+  strength_checkins: { singular: "treino de força", plural: "treinos de força" },
+  cardio_checkins: { singular: "treino de cardio", plural: "treinos de cardio" },
+  outdoor_checkins: { singular: "treino ao ar livre", plural: "treinos ao ar livre" },
   far_checkins: { singular: "treino viajando", plural: "treinos viajando" },
   laughs: { singular: "risada", plural: "risadas" },
-  complaints: { singular: "lamento", plural: "lamentos" },
   total_km: { singular: "km", plural: "km" },
   comebacks: { singular: "ressurreição", plural: "ressurreições" },
   early_checkins: { singular: "treino antes das 7h", plural: "treinos antes das 7h" },
