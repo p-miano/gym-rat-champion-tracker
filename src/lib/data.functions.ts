@@ -99,31 +99,44 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
 
     const wins = new Map<string, { count: number; athlete: any }>();
     const lasts = new Map<string, { count: number; athlete: any }>();
+    const activeDaysByAthlete = new Map<string, { days: number; athlete: any }>();
     const athleteSet = new Set<string>();
     let lastsTotal = 0;
+    let totalActiveDays = 0;
     for (const r of results ?? []) {
       athleteSet.add(r.athlete_id as string);
+      totalActiveDays += r.active_days ?? 0;
+      const cur = activeDaysByAthlete.get(r.athlete_id as string) ?? { days: 0, athlete: r.athletes };
+      cur.days += r.active_days ?? 0;
+      cur.athlete = r.athletes;
+      activeDaysByAthlete.set(r.athlete_id as string, cur);
       if (r.is_winner) {
-        const cur = wins.get(r.athlete_id as string) ?? { count: 0, athlete: r.athletes };
-        cur.count++;
-        cur.athlete = r.athletes;
-        wins.set(r.athlete_id as string, cur);
+        const cw = wins.get(r.athlete_id as string) ?? { count: 0, athlete: r.athletes };
+        cw.count++;
+        cw.athlete = r.athletes;
+        wins.set(r.athlete_id as string, cw);
       }
       if (r.is_last) {
         lastsTotal++;
-        const cur = lasts.get(r.athlete_id as string) ?? { count: 0, athlete: r.athletes };
-        cur.count++;
-        cur.athlete = r.athletes;
-        lasts.set(r.athlete_id as string, cur);
+        const cl = lasts.get(r.athlete_id as string) ?? { count: 0, athlete: r.athletes };
+        cl.count++;
+        cl.athlete = r.athletes;
+        lasts.set(r.athlete_id as string, cl);
       }
     }
     const winsList = [...wins.entries()]
       .map(([id, v]) => ({ athlete_id: id, wins: v.count, athlete: v.athlete }))
       .sort((a, b) => b.wins - a.wins);
+    const activeDaysRanking = [...activeDaysByAthlete.entries()]
+      .map(([id, v]) => ({ athlete_id: id, active_days: v.days, athlete: v.athlete }))
+      .sort((a, b) => b.active_days - a.active_days);
     const pot = 10 * monthIds.length * athleteSet.size + 10 * lastsTotal;
     return {
       year: data.year,
       months: monthIds.length,
+      days_span: daysSpan,
+      total_active_days: totalActiveDays,
+      active_days_ranking: activeDaysRanking,
       athletes: athleteSet.size,
       wins: winsList,
       lasts_total: lastsTotal,
