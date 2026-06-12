@@ -1,60 +1,62 @@
 ## Objetivo
 
-Refinar `classifyCheckInExclusive` em `src/lib/gymrats-parser.ts` para suportar três categorias mutuamente exclusivas: **Musculação**, **Cardio** e **Mobilidade** (nova). Treinos que não se encaixam continuam como `other`.
+Resolver as 15 categorizações erradas da Anne Miano (e similares de outros atletas):
+- LPO indo pra "outros" por bug
+- Surf sem categoria → criar nova categoria **Outros Esportes**
+- Funcional/circuito sem categoria → mapear pra **Cardio**
+
+"Sem categoria" permanece como rede de segurança pra check-ins que não batem em nenhum regex (decisão caso a caso depois).
 
 ## Mudanças
 
 ### 1. `src/lib/gymrats-parser.ts`
 
-**Tipo de retorno**
-```ts
-export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "other";
-```
+**Fix LPO**
+- `STRENGTH_TYPES`: adicionar `weight_lifting` (variante com underscore).
+- `STRENGTH_TEXT_RE`: incluir `\blpo\b`.
 
-**Cardio — expandir**
-- `CARDIO_PLATFORMS`: adicionar `stationary_bike`, `spinning`, `rowing_machine`, `stair_climber`, `hiit`, `dance`.
-- `CARDIO_TEXT_RE` (e `CARDIO_TEXT_RE` do `isCardio`): incluir `bike|bicicleta|spinning|ergom[eé]trica|esteira|corrid(a|inha)?|caminhad(a|inha)?|trote|escada|el[ií]ptico|transport|remo|dance|dança|hiit`.
+**Cardio — incluir funcional/circuito**
+- `CARDIO_NATIVE` e `CARDIO_PLATFORMS`: adicionar `circuit_training`, `functional_training`, `cross_training`.
+- `CARDIO_PLATFORM_RE`: adicionar `circuit|functional_training|cross_training`.
+- `CARDIO_TEXT_RE`: adicionar `funcional|circuito|wod|crossfit`.
+- ⚠ Não confundir com `functional_strength_training` (continua em `STRENGTH_PLATFORMS`).
 
-**Mobilidade — nova**
-```ts
-const MOBILITY_PLATFORMS = new Set([
-  "pilates", "yoga", "stretching", "flexibility", "mind_and_body",
-]);
-const MOBILITY_TEXT_RE =
-  /\b(pilates|yoga|mobs|mobilidade|alongamento|alongar|flexibilidade|libera[cç][aã]o miofascial|miofascial|adm|amplitude de movimento|tor[aá]cica|tornozelo|quadril|ombro\s+mob)\b/;
+**Nova categoria: Outros Esportes (`sport`)**
+- Tipo de retorno:
+  ```ts
+  export type ExclusiveCategory = "strength" | "cardio" | "mobility" | "sport" | "other";
+  ```
+- Novo `SPORT_TYPES` / `SPORT_PLATFORMS`: `surfing`, `skating`, `skateboarding`, `snowboarding`, `climbing`, `soccer`, `basketball`, `volleyball`, `tennis`, `badminton`, `martial_arts`, `boxing`, `kickboxing`, `jiu_jitsu`, `judo`, `karate`, `taekwondo`, `mma`, `golf`, `baseball`.
+- `SPORT_TEXT_RE`: `surf|skate|escalad|boulder|futebol|basquete|v[oô]lei|t[eê]nis|bad?minton|boxe|muay|jiu[\s-]?jitsu|jud[oô]|karat[eê]|taekwondo|mma|luta`.
+- Função `isSport(c: ClassifyInput): boolean`.
 
-function isMobility(c: ClassifyInput): boolean { ... }
-```
+**Precedência em `classifyCheckInExclusive`**
 
-**Nova ordem de precedência em `classifyCheckInExclusive`**
+Quatro buckets de duração: strength, cardio, mobility, sport. Decisão:
+1. Se houver ms em algum bucket → vence o maior. Empates resolvidos nesta ordem de preferência: **strength > cardio > sport > mobility** (carga > aeróbico cíclico > esporte > ADM).
+2. Sem ms → cascata textual exclusiva: `isStrength` → `isCardio` → `isSport` → `isMobility` → `other`.
 
-Somar duração (`duration_millis`) por categoria a partir de `check_in_activities`, usando os três buckets (strength, cardio, mobility). Sub-atividade desconhecida cai no fallback textual do check-in (strength → cardio → mobility, nessa ordem).
-
-Decisão:
-1. Se houver ms acumulado em qualquer bucket → vence o **maior**. Empate entre strength e qualquer outro → **strength** (regra atual mantida: carga vence ADM). Empate cardio vs mobility → **cardio**.
-2. Sem ms → cascata textual exclusiva: `isStrength` → `isCardio` → `isMobility` → `other`.
-
-Isso garante:
-- Cardio expandido nunca cai em musculação/mobilidade.
-- Pilates/yoga puro vai pra mobilidade, não pra `other`.
-- Agachamento profundo com carga continua musculação (strength vence empate).
-- HIIT/dance contam como cardio.
+Subs desconhecidas distribuem ms via fallback textual do check-in.
 
 ### 2. `src/routes/atletas.$id.tsx`
 
-- Adicionar `mobility` aos contadores de Dias Ativos: hoje há `strength`, `cardio`, `others`. Passa a ter `strength`, `cardio`, `mobility`, `others`. A soma das 4 categorias deve continuar batendo com Total de Dias Ativos.
-- Adicionar um cartão/coluna "Mobilidade" no painel de métricas e na tabela/auditoria (mesmo layout dos demais).
-- Atualizar legendas e textos em PT-BR ("Mobilidade").
-- A lógica semanal (meta 3×/semana segunda→domingo) **não** considera mobilidade como treino válido pra meta, mantendo o critério original (musculação+cardio). Confirmar com o usuário se quer incluir — ver pergunta abaixo.
+- Contador `sport` no `audit` (junto com `strength`/`cardio`/`mobility`/`other`).
+- Nova linha "Treinos de Outros Esportes" no painel (ícone neutro; sub: "surf, escalada, futebol, lutas etc.").
+- Texto explicativo: Musculação + Cardio + Mobilidade + Outros Esportes + Outros = Dias Ativos.
 
-### 3. Validação
+### 3. Validação esperada para Anne
 
-- Reabrir página da Amanda e conferir:
-  - Os 7 dias de Pilates aparecem em **Mobilidade**.
-  - 27/05 ("Bike", `stationary_bike`) aparece em **Cardio**.
-  - "Treinos sem categoria" zera (ou some) pra ela.
-- Conferir outro atleta com musculação pesada pra garantir que strength continua dominando.
+- 15/04 LPO → musculação
+- 18/04 WOD+REMO, 20/04 remo, 22/04 → cardio
+- 30/04, 14/05, 26/05, 28/05 Surftraining → cardio
+- 05/05 Surf training (`functional_training`) → cardio
+- 29/04, 09/05, 12/05, 13/05, 15/05, 20/05, 22/05, 27/05, 29/05 Surf → outros esportes
+- 01/04 surfe (sub surfing 5400000ms) → outros esportes
+- 13/04 "row + mobilidade surf" → outros esportes (texto "surf" bate)
 
-## Pergunta aberta
+Esperado: 0 dias em "Sem categoria" pra Anne.
 
-Mobilidade conta pra meta semanal de 3 treinos? Pelo enunciado original ("Musculação ou Cardio") presumo **não**, mas confirma antes de eu mexer na regra da semana.
+## Detalhes técnicos
+
+- `awards.ts` só consome `"strength"` e `"cardio"` — adicionar `sport` é compatível.
+- Meta semanal 3× continua por Dia Ativo (qualquer categoria).
