@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, Coins, CalendarDays, Flame, Award } from "lucide-react";
 import { getAnnualStanding, listMonths } from "@/lib/data.functions";
-import { AWARD_META } from "@/lib/jokes";
+import { AWARD_META, formatDetail } from "@/lib/jokes";
 
 const YEAR = new Date().getFullYear();
 const SEASON_LABEL = "2026 / 2027";
@@ -125,7 +125,14 @@ function HomePage() {
               {(standing.awards ?? []).map((a: any) => {
                 const meta = AWARD_META[a.award_key];
                 if (!meta) return null;
-                const detailEntry = a.details ? Object.entries(a.details)[0] : null;
+                const detailText = (() => {
+                  if (!a.details) return null;
+                  for (const [k, v] of Object.entries(a.details)) {
+                    const t = formatDetail(k, v);
+                    if (t) return t;
+                  }
+                  return null;
+                })();
                 return (
                   <div key={a.award_key} className="border-2 border-primary/40 bg-primary/5 p-4">
                     <div className="flex items-start gap-3">
@@ -141,9 +148,9 @@ function HomePage() {
                           >
                             <Avatar src={a.athlete?.profile_picture_url} name={a.athlete?.full_name} size={28} />
                             <span className="font-medium truncate">{a.athlete?.full_name}</span>
-                            {detailEntry && (
+                            {detailText && (
                               <span className="ml-auto font-condensed text-xs uppercase tracking-wider text-muted-foreground">
-                                {String(detailEntry[1])} {String(detailEntry[0]).replace(/_/g, " ")}
+                                {detailText}
                               </span>
                             )}
                           </Link>

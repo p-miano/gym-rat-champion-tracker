@@ -217,6 +217,16 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   }
 }
 
+export const recomputeAwards = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { year: number }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await recomputeAwardsForYear(supabaseAdmin, data.year);
+    return { ok: true, year: data.year };
+  });
+
 export const deleteMonth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { month_id: string }) => d)
