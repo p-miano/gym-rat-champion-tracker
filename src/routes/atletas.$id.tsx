@@ -59,7 +59,7 @@ function getSubActivities(raw: unknown) {
 function AthleteDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(opts(id));
-  const { athlete, check_ins, month_results, awards } = data;
+  const { athlete, check_ins, month_results, awards, dataset_max_occurred_at } = data;
 
   // Ano em foco = ano mais recente com check-ins
   const year = useMemo(() => {
@@ -84,16 +84,14 @@ function AthleteDetail() {
   const weekly = useMemo(() => {
     const CHALLENGE_START = "2026-04-01"; // quarta-feira
     const daysWithCheckIn = new Set<string>();
-    let maxKey = "";
     for (const c of check_ins) {
       if (!c.is_valid) continue;
-      const k = spDateKey(c.occurred_at);
-      daysWithCheckIn.add(k);
-      if (k > maxKey) maxKey = k;
+      daysWithCheckIn.add(spDateKey(c.occurred_at));
     }
     const todayKey = spDateKey(new Date().toISOString());
-    // Limite = menor entre hoje e último check-in importado (não passa de hoje)
-    const cutoffKey = maxKey && maxKey < todayKey ? maxKey : todayKey;
+    // Cutoff global: último check-in de QUALQUER atleta no dataset importado.
+    const globalMaxKey = dataset_max_occurred_at ? spDateKey(dataset_max_occurred_at) : "";
+    const cutoffKey = globalMaxKey && globalMaxKey < todayKey ? globalMaxKey : todayKey;
 
     const fmtDay = (d: Date) =>
       `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -139,7 +137,7 @@ function AthleteDetail() {
     const met = evaluable.filter((w) => w.met).length;
     const debt = evaluable.filter((w) => !w.met).length;
     return { weeks, evaluableCount: evaluable.length, met, debt };
-  }, [check_ins, year]);
+  }, [check_ins, year, dataset_max_occurred_at]);
 
 
   // ─── Auditoria por categoria ────────────────────────────────────────────
