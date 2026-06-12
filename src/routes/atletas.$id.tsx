@@ -96,28 +96,33 @@ function AthleteDetail() {
 
   // ─── Auditoria por categoria ────────────────────────────────────────────
   const audit = useMemo(() => {
-    let strength = 0;
-    let cardio = 0;
-    let other = 0;
-    let outdoor = 0;
-    let laughs = 0;
-    let totalKm = 0;
-    let totalMin = 0;
-    const activeDays = new Set<string>();
+    // Agrupa check-ins por dia (YYYY-MM-DD em SP). Cada dia = 1 sessão virtual.
+    type DayBucket = {
+      activity_types: (string | null)[];
+      titles: string[];
+      descriptions: string[];
+      subs: Array<{ platform_activity?: string | null; duration_millis?: number | null }>;
+      km: number;
+      min: number;
+      laughs: number;
+      anyOutdoor: boolean;
+    };
+    const days = new Map<string, DayBucket>();
     for (const c of yearCheckIns) {
-      if (c.is_valid) activeDays.add(spDateKey(c.occurred_at));
-      // Regra de exclusividade: cada check-in conta UMA categoria.
-      // Se houver musculação E cardio no mesmo check-in, vence a de maior duração.
-      // Empate → musculação (default).
-      const cat = classifyCheckInExclusive({
-        activity_type: c.activity_type,
-        title: c.title,
-        description: c.description,
-        check_in_activities: getSubActivities(c.raw),
-      });
-      if (cat === "strength") strength++;
-      else if (cat === "cardio") cardio++;
-      else other++;
+      if (!c.is_valid) continue;
+      const day = spDateKey(c.occurred_at);
+      let b = days.get(day);
+      if (!b) {
+        b = { activity_types: [], titles: [], descriptions: [], subs: [], km: 0, min: 0, laughs: 0, anyOutdoor: false };
+        days.set(day, b);
+      }
+      b.activity_types.push(c.activity_type);
+      if (c.title) b.titles.push(c.title);
+      if (c.description) b.descriptions.push(c.description);
+      b.subs.push(...getSubActivities(c.raw));
+      b.km += Number(c.distance_km ?? 0);
+      b.min += c.duration_min ?? 0;
+      for (const r of c.reactions ?? []) if (r.includes("😂")) b.laughs++;
       if (
         isOutdoor({
           activity_type: c.activity_type,
@@ -126,10 +131,32 @@ function AthleteDetail() {
           platform_activities: extractPlatformActivities(c.raw),
         })
       )
-        outdoor++;
-      for (const r of c.reactions ?? []) if (r.includes("😂")) laughs++;
-      totalKm += Number(c.distance_km ?? 0);
-      totalMin += c.duration_min ?? 0;
+        b.anyOutdoor = true;
+    }
+
+    let strength = 0;
+    let cardio = 0;
+    let other = 0;
+    let outdoor = 0;
+    let laughs = 0;
+    let totalKm = 0;
+    let totalMin = 0;
+    for (const b of days.values()) {
+      // Classifica a sessão diária: somatório de duração das sub-atividades do dia.
+      // Empate → musculação.
+      const cat = classifyCheckInExclusive({
+        activity_type: b.activity_types.find((t) => t) ?? null,
+        title: b.titles.join(" | ") || null,
+        description: b.descriptions.join(" | ") || null,
+        check_in_activities: b.subs,
+      });
+      if (cat === "strength") strength++;
+      else if (cat === "cardio") cardio++;
+      else other++;
+      if (b.anyOutdoor) outdoor++;
+      laughs += b.laughs;
+      totalKm += b.km;
+      totalMin += b.min;
     }
     return {
       strength,
@@ -139,8 +166,7 @@ function AthleteDetail() {
       laughs,
       totalKm,
       totalMin,
-      activeDays: activeDays.size,
-      totalCheckIns: yearCheckIns.length,
+      activeDays: days.size,
     };
   }, [yearCheckIns]);
 
@@ -341,17 +367,19 @@ function AthleteDetail() {
       <section>
         <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
         <p className="mb-3 text-xs text-muted-foreground">
-          Números brutos que alimentam cada categoria de prêmio. Cada check-in conta UMA categoria
-          (musculação ou cardio): se o treino tiver as duas, vence a de maior duração; empate vai
-          pra musculação. Musculação + Cardio + Outros = Total de Check-ins.
+          A unidade de medida é o <strong>Dia Ativo</strong>: vários check-ins no mesmo dia viram 1
+          sessão. Cada dia conta UMA categoria — somamos a duração de musculação vs cardio das
+          sub-atividades do dia; vence a maior, empate vai pra musculação.
+          Musculação + Cardio + Outros = Dias Ativos.
         </p>
         <div className="overflow-hidden rounded-xl border border-border">
           <AuditRow
             icon={<Activity className="h-4 w-4 text-primary" />}
-            label="Total de Check-ins no ano"
-            sub={`${audit.activeDays} dias ativos únicos (alguns dias com 2+ treinos)`}
-            value={audit.totalCheckIns}
+            label="Dias Ativos no ano"
+            sub="cada dia com pelo menos 1 check-in válido"
+            value={audit.activeDays}
           />
+
           <AuditRow
             icon={<Dumbbell className="h-4 w-4 text-primary" />}
             label="Treinos de Musculação"
