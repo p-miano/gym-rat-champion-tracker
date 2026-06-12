@@ -14,16 +14,272 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      annual_awards: {
+        Row: {
+          athlete_id: string
+          award_key: string
+          computed_at: string
+          details: Json | null
+          year: number
+        }
+        Insert: {
+          athlete_id: string
+          award_key: string
+          computed_at?: string
+          details?: Json | null
+          year: number
+        }
+        Update: {
+          athlete_id?: string
+          award_key?: string
+          computed_at?: string
+          details?: Json | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_awards_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athletes: {
+        Row: {
+          created_at: string
+          full_name: string
+          gymrats_id: number
+          id: string
+          profile_picture_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          gymrats_id: number
+          id?: string
+          profile_picture_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          gymrats_id?: number
+          id?: string
+          profile_picture_url?: string | null
+        }
+        Relationships: []
+      }
+      check_ins: {
+        Row: {
+          activity_type: string | null
+          athlete_id: string
+          description: string | null
+          distance_km: number | null
+          duration_min: number | null
+          has_photo: boolean
+          id: number
+          invalid_reasons: string[]
+          is_valid: boolean
+          location_latitude: number | null
+          location_longitude: number | null
+          location_name: string | null
+          month_id: string
+          occurred_at: string
+          photo_url: string | null
+          raw: Json | null
+          reactions: string[]
+          title: string | null
+        }
+        Insert: {
+          activity_type?: string | null
+          athlete_id: string
+          description?: string | null
+          distance_km?: number | null
+          duration_min?: number | null
+          has_photo?: boolean
+          id: number
+          invalid_reasons?: string[]
+          is_valid?: boolean
+          location_latitude?: number | null
+          location_longitude?: number | null
+          location_name?: string | null
+          month_id: string
+          occurred_at: string
+          photo_url?: string | null
+          raw?: Json | null
+          reactions?: string[]
+          title?: string | null
+        }
+        Update: {
+          activity_type?: string | null
+          athlete_id?: string
+          description?: string | null
+          distance_km?: number | null
+          duration_min?: number | null
+          has_photo?: boolean
+          id?: number
+          invalid_reasons?: string[]
+          is_valid?: boolean
+          location_latitude?: number | null
+          location_longitude?: number | null
+          location_name?: string | null
+          month_id?: string
+          occurred_at?: string
+          photo_url?: string | null
+          raw?: Json | null
+          reactions?: string[]
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_month_id_fkey"
+            columns: ["month_id"]
+            isOneToOne: false
+            referencedRelation: "months"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      month_results: {
+        Row: {
+          active_days: number
+          athlete_id: string
+          is_last: boolean
+          is_winner: boolean
+          month_id: string
+          rank: number
+          total_checkins: number
+          total_distance_km: number
+          total_minutes: number
+        }
+        Insert: {
+          active_days?: number
+          athlete_id: string
+          is_last?: boolean
+          is_winner?: boolean
+          month_id: string
+          rank: number
+          total_checkins?: number
+          total_distance_km?: number
+          total_minutes?: number
+        }
+        Update: {
+          active_days?: number
+          athlete_id?: string
+          is_last?: boolean
+          is_winner?: boolean
+          month_id?: string
+          rank?: number
+          total_checkins?: number
+          total_distance_km?: number
+          total_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "month_results_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "month_results_month_id_fkey"
+            columns: ["month_id"]
+            isOneToOne: false
+            referencedRelation: "months"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      months: {
+        Row: {
+          created_by: string | null
+          id: string
+          imported_at: string
+          month: number
+          name: string
+          source_id: number | null
+          year: number
+        }
+        Insert: {
+          created_by?: string | null
+          id?: string
+          imported_at?: string
+          month: number
+          name: string
+          source_id?: number | null
+          year: number
+        }
+        Update: {
+          created_by?: string | null
+          id?: string
+          imported_at?: string
+          month?: number
+          name?: string
+          source_id?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +406,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
