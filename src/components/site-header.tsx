@@ -34,9 +34,6 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink to="/">Placar Geral</NavLink>
-        </Link>
-        <nav className="hidden items-center gap-1 md:flex">
-          <NavLink to="/">Hall da Fama</NavLink>
           <NavLink to="/meses">Meses</NavLink>
           <NavLink to="/atletas">Atletas</NavLink>
         </nav>
