@@ -1,69 +1,54 @@
-## Como o cardio é calculado hoje (e por que está furando)
+## Bug encontrado
 
-Em `src/lib/awards.ts`, o prêmio `cardio_king` chama `isCardio(...)` para cada check-in e conta os que voltam `true`. Em paralelo, `bodybuilding_beast` chama `isStrength(...)`. As duas funções são **independentes** — o mesmo check-in pode bater nas duas.
+Caso real da Paula (04/abr/2026): título **"Musculação"**, `check_in_activities = [treadmill 17min, other 60min]`.
 
-`isCardio` (definida em `src/lib/gymrats-parser.ts`) usa uma cascata:
+A regra exclusiva atual só soma duração de sub-atividades cujo `platform_activity` está numa das listas conhecidas (CARDIO/STRENGTH). Como o Gym Rats marca treino de academia como `platform_activity = "other"` (genérico), os 60 min de musculação **não somam pra força** — só os 17 min de esteira somam pra cardio. Resultado: vai pra **cardio** quando claramente deveria ser **força**.
 
-1. **Camada 1 — tipo nativo:** `activity_type` ∈ {running, walking, treadmill, cycling, swimming}.
-2. **Camada 2 — atividades internas:** qualquer item de `check_in_activities[].platform_activity` casando `/treadmill|running|elliptical/`.
-3. **Camada 3 — texto:** título/descrição contendo "corrida", "esteira", "cardio", "pedal", "escada", "elíptico" etc.
+Contagem da Paula sob a regra atual: **8 força / 45 cardio** (errado).
 
-`isStrength` segue lógica análoga: `activity_type` ∈ {weightlifting, strength_training, lpo} OU texto com "musculação", "supino", "perna", "hipertrofia".
+## Correção
 
-### Exemplo do bug (dado real do banco)
+Para cada sub-atividade do check-in:
 
-Check-in "Inferior + esteira" do Gabriel (1º/maio):
-- `activity_type = null`
-- `check_in_activities = [{ platform_activity: "strength_training", duration_millis: 3.895.000 }, { platform_activity: "treadmill", duration_millis: 1.227.000 }]`
+1. `platform_activity` ∈ cardio (treadmill, running, walking, cycling, indoor_cycling, elliptical, swimming, stairs, rowing, hiking) → **cardio**.
+2. `platform_activity` ∈ strength (strength_training, weightlifting, lpo, functional_strength_training) → **strength**.
+3. **`platform_activity` = "other" ou desconhecido** → classifica essa sub-atividade pelo **fallback textual do check-in** (`title` + `description`):
+   - bate strength (musculação, supino, perna, hipertrofia, treino de força) → **strength**
+   - senão bate cardio (corrida, esteira, caminhada, cardio, pedal, escada, elíptico) → **cardio**
+   - senão → **outro** (não conta)
 
-Hoje:
-- `isCardio` → **true** (Camada 2 viu "treadmill")
-- `isStrength` → **true** (Camada 1 viu "strength_training" entre os platform_activities? Não — `isStrength` só olha `activity_type`, que é null. Olha o texto: "inferior" + "esteira" → "perna"/"musculação" não batem, então hoje retorna **false**.)
+Depois soma `duration_millis` por categoria, vence a maior. Empate → strength.
 
-Resultado atual desse check-in: vai pro Cardio, não vai pro Marombeiro. Mas o atleta ficou **65 min de musculação contra 20 min de esteira** — deveria ser Marombeiro.
+Se o check-in **não tem** `check_in_activities`, segue o fallback antigo (texto + activity_type, strength tem precedência).
 
-E há o caso simétrico (texto "musculação + corridinha rápida") que cai nos dois, dependendo de o `activity_type` ser preenchido.
+### Validação no caso da Paula
 
-## Regra nova (sua proposta, formalizada)
+- 04-01 "Musculação" [treadmill 17m, other 60m] → cardio 17 + strength 60 → **strength** ✅
+- 04-08 "Cardio" [treadmill 37m] → cardio 37 → **cardio** ✅
+- 04-23 "Musculação" [other 70m] → strength 70 → **strength** ✅
+- 05-01 "Walking" [walking 13m] → cardio 13 → **cardio** ✅
+- 05-18 "Musculação" [other 62m, treadmill 21m] → strength 62, cardio 21 → **strength** ✅
 
-Cada check-in tem **no máximo uma categoria** entre `strength` e `cardio` (pode não ter nenhuma — outras modalidades não mudam). A decisão é por **tempo da atividade dominante**:
-
-1. Para cada item de `check_in_activities`, classifique pelo `platform_activity`:
-   - **cardio:** treadmill, running, walking, cycling, indoor_cycling, elliptical, swimming, stairs, rowing, hiking
-   - **strength:** strength_training, weightlifting, lpo, weight_lifting, functional_strength
-   - **outro:** não conta nas duas categorias
-2. Some `duration_millis` por categoria dentro do check-in. A categoria com **maior tempo** ganha o check-in. Empate → cardio perde (vai pra força, porque musculação é a "base" do treino combinado; podemos inverter se preferir).
-3. **Fallback** quando `check_in_activities` está vazio ou só tem itens "outro":
-   - Usa a cascata atual (`activity_type` → texto) mas roda **strength primeiro**; se bater strength, o check-in **não** é cardio. Se não bater strength, aplica `isCardio` como hoje.
-
-Resultado para "Inferior + esteira": força 65 min × cardio 20 min → **Marombeiro** ✅. O cardio_king perde esse check-in.
+Estimativa pós-fix da Paula: ~38 strength / 15 cardio (inverte completamente). E o ranking geral muda — Paula deixa de liderar cardio_king.
 
 ## Mudanças no código
 
-**`src/lib/gymrats-parser.ts`** (uma adição, sem mexer nas funções existentes):
+**`src/lib/gymrats-parser.ts`** — atualizar `classifyCheckInExclusive`:
 
-- Nova função `classifyCheckInExclusive(input)` que devolve `"strength" | "cardio" | "other"`.
-- Recebe `activity_type`, `title`, `description` e `check_in_activities` (array com `platform_activity` + `duration_millis`).
-- Implementa a regra acima.
-- Mantém `isCardio` / `isStrength` / `isOutdoor` exportadas (outras partes podem usar; `isOutdoor` continua independente — um treino na rua pode ser cardio OU força).
+- Manter as listas `CARDIO_PLATFORMS` / `STRENGTH_PLATFORMS`.
+- Pré-computar fallback do check-in (`isStrength(input)` / `isCardio(input)`) uma vez.
+- No loop das subs, quando `platform_activity` não está em nenhuma das listas (incluindo "other", null, ""), atribuir a duração à categoria do fallback textual (se houver); senão ignora.
 
-**`src/lib/awards.ts`**:
-
-- Estender `AwardCheckIn` com `check_in_activities` (extraído do `raw` já carregado).
-- Em `cardio_king` e `bodybuilding_beast`, trocar `isCardio(...)` / `isStrength(...)` pela classificação exclusiva: incrementa força se `classify === "strength"`, cardio se `classify === "cardio"`.
-- `nature_lover` continua usando `isOutdoor` (independente).
-- Desempates seguem iguais (minutos totais para força, km total para cardio).
-
-**`src/lib/import.functions.ts`**: nenhuma alteração de schema. O `select` já traz `raw`, de onde a engine extrai `check_in_activities`.
+**`src/lib/awards.ts`** — nada muda, já chama `classifyCheckInExclusive`.
 
 ## Recálculo
 
-Depois das mudanças, rodar recálculo server-side para 2026 (mesmo fluxo da última vez, via `recomputeAwardsForYear`). Esperado: Marombeiro provavelmente cresce, Cardio cai um pouco; nenhum atleta vai aparecer nas duas listas.
+Rodar o mesmo script que recalcula 2026 e regravar `annual_awards`. Esperado:
 
-## Pergunta antes de implementar
+- `bodybuilding_beast`: Paula provavelmente assume a liderança (musculação diária + texto "Musculação").
+- `cardio_king`: novo líder (provavelmente quem realmente só faz cardio puro).
+- `mile_eater`, `early_bird`: continuam baseados em distância/hora, não mudam.
 
-Em caso de **empate exato** de tempo entre força e cardio no mesmo check-in, o que prefere?
+## Fora do escopo
 
-- a) Vai pra **força** (assumo isso por padrão se você não responder — musculação tende a ser a parte estruturada do treino).
-- b) Vai pra **cardio**.
-- c) Não conta em nenhuma das duas categorias.
+Não vou deduplicar os check-ins repetidos do mesmo dia da Paula (05/01 e 05/02 têm 2-3 entradas idênticas). Parece erro de importação histórico — posso atacar depois se quiser.
