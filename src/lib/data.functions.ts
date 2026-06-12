@@ -163,7 +163,7 @@ export const getAthlete = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: athlete }, { data: checkIns }, { data: monthResults }, { data: awards }] = await Promise.all([
+    const [{ data: athlete }, { data: checkIns }, { data: monthResults }, { data: awards }, { data: maxRow }] = await Promise.all([
       supabaseAdmin.from("athletes").select("*").eq("id", data.id).single(),
       supabaseAdmin.from("check_ins").select("*").eq("athlete_id", data.id).order("occurred_at"),
       supabaseAdmin
@@ -171,6 +171,7 @@ export const getAthlete = createServerFn({ method: "GET" })
         .select("*, months(id, year, month, name)")
         .eq("athlete_id", data.id),
       supabaseAdmin.from("annual_awards").select("*").eq("athlete_id", data.id),
+      supabaseAdmin.from("check_ins").select("occurred_at").order("occurred_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (!athlete) throw new Error("Atleta não encontrado");
     return {
@@ -178,6 +179,7 @@ export const getAthlete = createServerFn({ method: "GET" })
       check_ins: checkIns ?? [],
       month_results: monthResults ?? [],
       awards: awards ?? [],
+      dataset_max_occurred_at: (maxRow?.occurred_at as string | null) ?? null,
     };
   });
 
