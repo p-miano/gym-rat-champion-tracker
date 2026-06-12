@@ -49,7 +49,7 @@ function HomePage() {
   return (
     <div className="space-y-12">
       <section className="grid-bg rounded-none border-2 border-border bg-card/40 p-8 md:p-12">
-        <div className="font-condensed text-xs text-primary">// Temporada {SEASON_LABEL}</div>
+        <div className="font-condensed text-xs text-primary uppercase">Temporada {SEASON_LABEL}</div>
         <h1 className="display mt-2 text-6xl md:text-8xl text-lime">Placar Geral</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Quem mais venceu meses leva a bolada, se aposenta, faz a viagem dos sonhos e manda
