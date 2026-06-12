@@ -149,6 +149,12 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
       lasts: [...lasts.entries()]
         .map(([id, v]) => ({ athlete_id: id, count: v.count, athlete: v.athlete }))
         .sort((a, b) => b.count - a.count),
+      awards: (awardsRaw ?? []).map((a: any) => ({
+        award_key: a.award_key,
+        athlete_id: a.athlete_id,
+        athlete: a.athletes,
+        details: a.details,
+      })),
       pot,
     };
   });
