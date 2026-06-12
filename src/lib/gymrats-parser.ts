@@ -199,7 +199,7 @@ const STRENGTH_TYPES = new Set([
   "functional_strength",
 ]);
 const STRENGTH_TEXT_RE =
-  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|agachament|levantament|peito|costas|ombro|b[ií]ceps|tr[ií]ceps|gl[uú]teo|perna|lpo)\b/;
+  /\b(muscula[cç][aã]o|treino de for[cç]a|hipertrofia|supino|agachament|levantament|peito|costas|ombro|b[ií]ceps|tr[ií]ceps|gl[uú]teo|perna|lpo|dorsal|deltoid|trap[eé]zio|lombar|abdom|abd[oô]men|panturr|qu[aá]driceps|isquiotib|adutor|abdutor|bra[cç]o|antebra[cç]o)\b/;
 
 export function isStrength(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
