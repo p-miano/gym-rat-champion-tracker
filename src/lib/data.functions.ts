@@ -70,11 +70,18 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: months } = await supabaseAdmin
       .from("months")
-      .select("id")
+      .select("id, year, month")
       .eq("year", data.year);
     const monthIds = (months ?? []).map((m) => m.id);
+    const daysSpan = (months ?? []).reduce(
+      (acc, m: any) => acc + new Date(m.year, m.month, 0).getDate(),
+      0,
+    );
     if (!monthIds.length) {
       return {
+        days_span: 0,
+        total_active_days: 0,
+        active_days_ranking: [] as any[],
         year: data.year,
         months: 0,
         athletes: 0,
