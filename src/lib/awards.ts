@@ -1,28 +1,33 @@
 // Engine de prêmios. Funções puras sobre os check-ins do ano.
-import { spDateKey, spHour, spWeekKey } from "./gymrats-parser";
+import {
+  extractPlatformActivities,
+  isCardio,
+  isOutdoor,
+  isStrength,
+  spDateKey,
+  spHour,
+  spWeekKey,
+} from "./gymrats-parser";
 
 export interface AwardCheckIn {
   athlete_id: string;
   occurred_at: string;
   is_valid: boolean;
   distance_km: number | null;
+  duration_min: number | null;
   activity_type: string | null;
   title: string | null;
   description: string | null;
   location_latitude: number | null;
   location_longitude: number | null;
   reactions: string[];
+  raw: unknown;
 }
 
 export interface AwardResult {
   award_key: string;
   athlete_id: string | null;
   details: Record<string, unknown>;
-}
-
-interface MonthLast {
-  athlete_id: string;
-  is_last: boolean;
 }
 
 function topByScore(
@@ -44,9 +49,6 @@ function topByScore(
   return bestKey;
 }
 
-const HYPO_RE = /sinusit|laringit|dorflex|virose|quase morri|gripad|lesão|lesionad|resfriad|febre|dor de cabeça|enxaqueca|enjoo|gastrite/i;
-const FLEX_RE = /pilate|lpo|levantamento|alongamento|stretch|yoga|funcional/i;
-
 function haversineKm(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number },
@@ -62,10 +64,7 @@ function haversineKm(
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 
-export function computeAwards(
-  checkIns: AwardCheckIn[],
-  monthLasts: MonthLast[],
-): AwardResult[] {
+export function computeAwards(checkIns: AwardCheckIn[]): AwardResult[] {
   // Agrupar por atleta
   const byAthlete = new Map<string, AwardCheckIn[]>();
   for (const c of checkIns) {
@@ -80,6 +79,22 @@ export function computeAwards(
     const days = new Set<string>();
     for (const c of list) if (c.is_valid) days.add(spDateKey(c.occurred_at));
     activeDaysTotal.set(aid, days.size);
+  }
+
+  // Total de minutos (tiebreak para marombeiro)
+  const totalMinutes = new Map<string, number>();
+  for (const [aid, list] of byAthlete) {
+    let m = 0;
+    for (const c of list) m += c.duration_min ?? 0;
+    totalMinutes.set(aid, m);
+  }
+
+  // Total de km (tiebreak para cardio_king)
+  const totalKm = new Map<string, number>();
+  for (const [aid, list] of byAthlete) {
+    let k = 0;
+    for (const c of list) k += c.distance_km ?? 0;
+    totalKm.set(aid, Math.round(k));
   }
 
   const results: AwardResult[] = [];
@@ -106,61 +121,72 @@ export function computeAwards(
     add("voucher_limit", winner, { weeks_at_three: winner ? score.get(winner) : 0 });
   }
 
-  // 2. calendar_cheater: nº de semanas com 3+ treinos em 3 dias consecutivos
+  // 2. bodybuilding_beast: maior nº de treinos de musculação/força
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
-      const weekDays = new Map<string, Set<string>>();
-      for (const c of list) {
-        if (!c.is_valid) continue;
-        const wk = spWeekKey(c.occurred_at);
-        const day = spDateKey(c.occurred_at);
-        if (!weekDays.has(wk)) weekDays.set(wk, new Set());
-        weekDays.get(wk)!.add(day);
-      }
       let n = 0;
-      for (const days of weekDays.values()) {
-        const sorted = [...days].sort();
-        // procura janela de 3 dias consecutivos
-        for (let i = 0; i + 2 < sorted.length; i++) {
-          const d0 = new Date(sorted[i] + "T00:00:00Z").getTime();
-          const d2 = new Date(sorted[i + 2] + "T00:00:00Z").getTime();
-          if ((d2 - d0) / 86400000 <= 2) {
-            n++;
-            break;
-          }
-        }
+      for (const c of list) {
+        if (
+          isStrength({
+            activity_type: c.activity_type,
+            title: c.title,
+            description: c.description,
+            platform_activities: extractPlatformActivities(c.raw),
+          })
+        )
+          n++;
+      }
+      score.set(aid, n);
+    }
+    const winner = topByScore(score, totalMinutes);
+    add("bodybuilding_beast", winner, {
+      strength_checkins: winner ? score.get(winner) : 0,
+    });
+  }
+
+  // 3. cardio_king: maior nº de treinos de cardio
+  {
+    const score = new Map<string, number>();
+    for (const [aid, list] of byAthlete) {
+      let n = 0;
+      for (const c of list) {
+        if (
+          isCardio({
+            activity_type: c.activity_type,
+            title: c.title,
+            description: c.description,
+            platform_activities: extractPlatformActivities(c.raw),
+          })
+        )
+          n++;
+      }
+      score.set(aid, n);
+    }
+    const winner = topByScore(score, totalKm);
+    add("cardio_king", winner, { cardio_checkins: winner ? score.get(winner) : 0 });
+  }
+
+  // 4. nature_lover: maior nº de check-ins ao ar livre
+  {
+    const score = new Map<string, number>();
+    for (const [aid, list] of byAthlete) {
+      let n = 0;
+      for (const c of list) {
+        if (
+          isOutdoor({
+            activity_type: c.activity_type,
+            title: c.title,
+            description: c.description,
+            platform_activities: extractPlatformActivities(c.raw),
+          })
+        )
+          n++;
       }
       score.set(aid, n);
     }
     const winner = topByScore(score, activeDaysTotal);
-    add("calendar_cheater", winner, { compressed_weeks: winner ? score.get(winner) : 0 });
-  }
-
-  // 3. dorflex_sponsor
-  {
-    const score = new Map<string, number>();
-    for (const m of monthLasts) {
-      if (!m.is_last) continue;
-      score.set(m.athlete_id, (score.get(m.athlete_id) ?? 0) + 1);
-    }
-    const winner = topByScore(score);
-    add("dorflex_sponsor", winner, { times_last: winner ? score.get(winner) : 0 });
-  }
-
-  // 4. flexible_iron
-  {
-    const score = new Map<string, number>();
-    for (const [aid, list] of byAthlete) {
-      let n = 0;
-      for (const c of list) {
-        const blob = `${c.activity_type ?? ""} ${c.title ?? ""}`;
-        if (FLEX_RE.test(blob)) n++;
-      }
-      score.set(aid, n);
-    }
-    const winner = topByScore(score);
-    add("flexible_iron", winner, { matches: winner ? score.get(winner) : 0 });
+    add("nature_lover", winner, { outdoor_checkins: winner ? score.get(winner) : 0 });
   }
 
   // 5. no_borders: check-ins fora da área usual (raio 30 km do cluster dominante)
@@ -177,7 +203,6 @@ export function computeAwards(
         score.set(aid, 0);
         continue;
       }
-      // Agrupa em células de ~5 km e acha a mais populosa
       const cells = new Map<string, typeof geo>();
       for (const c of geo) {
         const gLat = Math.round(c.location_latitude! / GRID_DEG);
@@ -189,7 +214,6 @@ export function computeAwards(
       }
       let topCell: typeof geo = [];
       for (const arr of cells.values()) if (arr.length > topCell.length) topCell = arr;
-      // Base = centróide só dos check-ins da célula dominante (ponto real)
       const baseLat = topCell.reduce((s, c) => s + (c.location_latitude ?? 0), 0) / topCell.length;
       const baseLng = topCell.reduce((s, c) => s + (c.location_longitude ?? 0), 0) / topCell.length;
       let far = 0;
@@ -229,22 +253,7 @@ export function computeAwards(
     add("wod_comedian", winner, { laughs: winner ? score.get(winner) : 0 });
   }
 
-  // 7. hypochondriac
-  {
-    const score = new Map<string, number>();
-    for (const [aid, list] of byAthlete) {
-      let n = 0;
-      for (const c of list) {
-        const blob = `${c.title ?? ""} ${c.description ?? ""}`;
-        if (HYPO_RE.test(blob)) n++;
-      }
-      score.set(aid, n);
-    }
-    const winner = topByScore(score);
-    add("hypochondriac", winner, { complaints: winner ? score.get(winner) : 0 });
-  }
-
-  // 8. mile_eater: soma de distance_km
+  // 7. mile_eater: soma de distance_km
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
@@ -256,7 +265,7 @@ export function computeAwards(
     add("mile_eater", winner, { total_km: winner ? score.get(winner) : 0 });
   }
 
-  // 9. phoenix: hiato >= 21 dias seguido de 3 semanas com >= 3 dias ativos
+  // 8. phoenix: hiato >= 21 dias seguido de 3 semanas com >= 3 dias ativos
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
@@ -269,7 +278,6 @@ export function computeAwards(
       for (let i = 1; i < valid.length; i++) {
         const gap = (new Date(valid[i].occurred_at).getTime() - new Date(valid[i - 1].occurred_at).getTime()) / 86400000;
         if (gap < 21) continue;
-        // 3 semanas após
         const afterStart = new Date(valid[i].occurred_at);
         const afterEnd = new Date(afterStart.getTime() + 21 * 86400000);
         const weekDays = new Map<string, Set<string>>();
@@ -290,7 +298,7 @@ export function computeAwards(
     add("phoenix", winner, { comebacks: winner ? score.get(winner) : 0 });
   }
 
-  // 10. early_bird
+  // 9. early_bird
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
@@ -302,7 +310,7 @@ export function computeAwards(
     add("early_bird", winner, { early_checkins: winner ? score.get(winner) : 0 });
   }
 
-  // 11. night_owl
+  // 10. night_owl
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
