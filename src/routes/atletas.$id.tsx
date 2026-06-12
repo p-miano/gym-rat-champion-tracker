@@ -137,7 +137,7 @@ function AthleteDetail() {
     const met = evaluable.filter((w) => w.met).length;
     const debt = evaluable.filter((w) => !w.met).length;
     return { weeks, evaluableCount: evaluable.length, met, debt };
-  }, [check_ins, year]);
+  }, [check_ins, year, dataset_max_occurred_at]);
 
 
   // ─── Auditoria por categoria ────────────────────────────────────────────
