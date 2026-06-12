@@ -116,27 +116,15 @@ function isRunningOrWalking(activityType: string | null, title: string | null): 
   );
 }
 
-export function validateCheckIn(c: {
+export function validateCheckIn(_c: {
   has_photo: boolean;
   duration_min: number | null;
   distance_km: number | null;
   activity_type: string | null;
   title: string | null;
 }): { is_valid: boolean; invalid_reasons: string[] } {
-  const reasons: string[] = [];
-  if (!c.has_photo) reasons.push("no_photo");
-
-  const running = isRunningOrWalking(c.activity_type, c.title);
-  const dist = c.distance_km ?? 0;
-  const dur = c.duration_min ?? 0;
-
-  if (running && dist < 3) reasons.push("short_distance");
-
-  // Curto demais: <30 min, exceto se corrida/caminhada >= 3km
-  const runEscape = running && dist >= 3;
-  if (dur < 30 && !runEscape) reasons.push("short_duration");
-
-  return { is_valid: reasons.length === 0, invalid_reasons: reasons };
+  // Sem regras de validação: todo check-in importado conta (igual ao GymRats).
+  return { is_valid: true, invalid_reasons: [] };
 }
 
 export function parseCheckIn(c: GymRatsCheckIn): ParsedCheckIn {
