@@ -20,7 +20,7 @@ function MonthsPage() {
   const { data: months } = useSuspenseQuery(monthsOpts());
   return (
     <div className="space-y-6">
-      <h1 className="display text-4xl text-lime-glow">Meses do desafio</h1>
+      <h1 className="display text-4xl text-lime">Meses do desafio</h1>
       {months.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
           Ainda não rolou import. Vai ali em <Link to="/importar" className="underline">Importar</Link>.
@@ -52,7 +52,7 @@ function MonthsPage() {
                       ))
                     )}
                   </Row>
-                  <Row icon={<Skull className="h-4 w-4 text-destructive" />} label="Cliente Ouro">
+                  <Row icon={<Skull className="h-4 w-4 text-destructive" />} label="Lanterna">
                     {m.lasts.length === 0 ? (
                       <span className="text-muted-foreground">—</span>
                     ) : (

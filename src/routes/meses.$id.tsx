@@ -41,7 +41,7 @@ function MonthDetail() {
         <Link to="/meses" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
           ← Todos os meses
         </Link>
-        <h1 className="display mt-2 text-4xl text-lime-glow">{month.name}</h1>
+        <h1 className="display mt-2 text-4xl text-lime">{month.name}</h1>
         <p className="text-muted-foreground">
           {MONTH_NAMES[month.month]} / {month.year}
         </p>
@@ -72,7 +72,7 @@ function MonthDetail() {
                       {r.athletes?.full_name}
                     </Link>
                   </td>
-                  <td className="px-3 py-2 text-right font-mono display text-lg text-lime-glow">{r.active_days}</td>
+                  <td className="px-3 py-2 text-right font-mono display text-lg text-lime">{r.active_days}</td>
                   <td className="px-3 py-2 text-right font-mono">{r.total_checkins}</td>
                   <td className="px-3 py-2 text-right font-mono">{r.total_minutes}</td>
                   <td className="px-3 py-2 text-right font-mono">{Number(r.total_distance_km ?? 0).toFixed(1)}</td>
