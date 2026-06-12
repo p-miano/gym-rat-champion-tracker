@@ -87,9 +87,8 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
         athletes: 0,
         wins: [] as any[],
         lasts_total: 0,
+        lasts: [] as any[],
         pot: 0,
-        last_month_winner: null,
-        last_month_lasts: [] as any[],
       };
     }
     const { data: results } = await supabaseAdmin
