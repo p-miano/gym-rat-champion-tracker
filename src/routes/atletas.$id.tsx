@@ -483,21 +483,24 @@ function AthleteDetail() {
         ) : (
           <div className="rounded-xl border border-border bg-card/40 p-4">
             <div className="flex flex-wrap gap-1.5">
-              {weekly.weeks.map((w) => (
-                <div
-                  key={w.wk}
-                  title={`${w.wk} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"}`}
-                  className={`flex h-9 min-w-[44px] items-center justify-center rounded-md border px-2 font-mono text-xs ${
-                    w.met
-                      ? "border-primary/40 bg-primary/15 text-primary"
-                      : "border-destructive/40 bg-destructive/10 text-destructive"
-                  }`}
-                >
-                  {w.wk.slice(5)} · {w.days}d
-                </div>
-              ))}
+              {weekly.weeks.map((w) => {
+                const cls = !w.complete
+                  ? "border-border bg-muted/20 text-muted-foreground"
+                  : w.met
+                  ? "border-primary/40 bg-primary/15 text-primary"
+                  : "border-destructive/40 bg-destructive/10 text-destructive";
+                return (
+                  <div
+                    key={w.wk}
+                    title={`Semana ${w.mondayKey} → ${w.sundayKey} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"}${w.complete ? "" : " · em curso"}`}
+                    className={`flex h-9 min-w-[44px] items-center justify-center rounded-md border px-2 font-mono text-xs ${cls}`}
+                  >
+                    {w.mondayKey.slice(5)} · {w.days}d
+                  </div>
+                );
+              })}
             </div>
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-3 w-3 rounded-sm border border-primary/40 bg-primary/15" />
                 meta cumprida (≥3 dias)
@@ -505,6 +508,10 @@ function AthleteDetail() {
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-3 w-3 rounded-sm border border-destructive/40 bg-destructive/10" />
                 semana em débito
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded-sm border border-border bg-muted/20" />
+                semana em curso (ainda não avaliada)
               </span>
             </div>
           </div>
