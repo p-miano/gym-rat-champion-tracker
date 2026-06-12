@@ -183,6 +183,7 @@ function AthleteDetail() {
     let strength = 0;
     let cardio = 0;
     let mobility = 0;
+    let sport = 0;
     let other = 0;
     let outdoor = 0;
     let laughs = 0;
@@ -198,6 +199,7 @@ function AthleteDetail() {
       if (cat === "strength") strength++;
       else if (cat === "cardio") cardio++;
       else if (cat === "mobility") mobility++;
+      else if (cat === "sport") sport++;
       else other++;
       if (b.anyOutdoor) outdoor++;
       laughs += b.laughs;
@@ -208,6 +210,7 @@ function AthleteDetail() {
       strength,
       cardio,
       mobility,
+      sport,
       other,
       outdoor,
       laughs,
