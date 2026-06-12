@@ -24,7 +24,6 @@ import { Avatar } from "./index";
 import { AWARD_META, jokeFor } from "@/lib/jokes";
 import {
   spDateKey,
-  spWeekKey,
   classifyCheckInExclusive,
   isOutdoor,
   extractPlatformActivities,
