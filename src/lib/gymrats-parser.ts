@@ -227,29 +227,10 @@ export interface ExclusiveClassifyInput {
 export function classifyCheckInExclusive(
   c: ExclusiveClassifyInput,
 ): ExclusiveCategory {
-  // Etapa 1: olhar as sub-atividades com duração
   const subs = Array.isArray(c.check_in_activities) ? c.check_in_activities : [];
-  let strengthMs = 0;
-  let cardioMs = 0;
-  let sawClassified = false;
-  for (const s of subs) {
-    const p = (s.platform_activity ?? "").toString().toLowerCase();
-    const ms = Number(s.duration_millis ?? 0) || 0;
-    if (STRENGTH_PLATFORMS.has(p)) {
-      strengthMs += ms;
-      sawClassified = true;
-    } else if (CARDIO_PLATFORMS.has(p)) {
-      cardioMs += ms;
-      sawClassified = true;
-    }
-  }
-  if (sawClassified && (strengthMs > 0 || cardioMs > 0)) {
-    // Empate → strength (musculação é a base do treino combinado)
-    return strengthMs >= cardioMs ? "strength" : "cardio";
-  }
 
-  // Etapa 2: fallback texto/activity_type. Strength tem precedência sobre cardio.
-  const input: ClassifyInput = {
+  // Fallback textual do check-in (usado tanto para subs "other"/desconhecidas quanto sem subs)
+  const fallbackInput: ClassifyInput = {
     activity_type: c.activity_type,
     title: c.title,
     description: c.description,
@@ -257,10 +238,37 @@ export function classifyCheckInExclusive(
       .map((s) => (s.platform_activity ?? "").toString().toLowerCase())
       .filter((p) => p.length > 0),
   };
-  if (isStrength(input)) return "strength";
-  if (isCardio(input)) return "cardio";
+  const fallbackStrength = isStrength(fallbackInput);
+  const fallbackCardio = !fallbackStrength && isCardio(fallbackInput);
+
+  let strengthMs = 0;
+  let cardioMs = 0;
+  for (const s of subs) {
+    const p = (s.platform_activity ?? "").toString().toLowerCase();
+    const ms = Number(s.duration_millis ?? 0) || 0;
+    if (ms <= 0) continue;
+    if (STRENGTH_PLATFORMS.has(p)) {
+      strengthMs += ms;
+    } else if (CARDIO_PLATFORMS.has(p)) {
+      cardioMs += ms;
+    } else {
+      // platform_activity "other"/desconhecido → usa o fallback textual do check-in
+      if (fallbackStrength) strengthMs += ms;
+      else if (fallbackCardio) cardioMs += ms;
+    }
+  }
+
+  if (strengthMs > 0 || cardioMs > 0) {
+    // Empate → strength (musculação é a base do treino combinado)
+    return strengthMs >= cardioMs ? "strength" : "cardio";
+  }
+
+  // Sem subs com duração e sem hit nas listas → fallback puro
+  if (fallbackStrength) return "strength";
+  if (fallbackCardio) return "cardio";
   return "other";
 }
+
 
 export function validateCheckIn(_c: {
   has_photo: boolean;
