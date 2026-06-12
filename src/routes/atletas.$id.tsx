@@ -516,10 +516,10 @@ function AthleteDetail() {
                 return (
                   <div
                     key={w.wk}
-                    title={`Semana ${w.mondayKey} → ${w.sundayKey} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"}${w.complete ? "" : " · em curso"}`}
-                    className={`flex h-9 min-w-[44px] items-center justify-center rounded-md border px-2 font-mono text-xs ${cls}`}
+                    title={`Semana ${w.mondayBR} → ${w.sundayBR} · ${w.days} dia${w.days === 1 ? "" : "s"} ativo${w.days === 1 ? "" : "s"} · meta ${w.goal}${w.transition ? " (transição)" : ""}${w.complete ? "" : " · em curso"}`}
+                    className={`flex h-9 min-w-[52px] items-center justify-center rounded-md border px-2 font-mono text-xs ${cls}`}
                   >
-                    {w.mondayKey.slice(5)} · {w.days}d
+                    {w.mondayBR} · {w.days}d
                   </div>
                 );
               })}
