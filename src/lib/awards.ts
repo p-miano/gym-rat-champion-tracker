@@ -1,13 +1,18 @@
 // Engine de prêmios. Funções puras sobre os check-ins do ano.
 import {
+  classifyCheckInExclusive,
   extractPlatformActivities,
-  isCardio,
   isOutdoor,
-  isStrength,
   spDateKey,
   spHour,
   spWeekKey,
 } from "./gymrats-parser";
+
+function getSubActivities(raw: unknown): Array<{ platform_activity?: string | null; duration_millis?: number | null }> {
+  const r = raw as { check_in_activities?: unknown } | null | undefined;
+  const arr = r?.check_in_activities;
+  return Array.isArray(arr) ? (arr as Array<{ platform_activity?: string | null; duration_millis?: number | null }>) : [];
+}
 
 export interface AwardCheckIn {
   athlete_id: string;
