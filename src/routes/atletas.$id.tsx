@@ -312,7 +312,7 @@ function AthleteDetail() {
           <BigStat
             label="Semanas Cumpridas"
             value={weekly.met}
-            sub={`de ${weekly.weeks.length} semanas registradas`}
+            sub={`de ${weekly.evaluableCount} semanas encerradas (seg→dom)`}
             tone="ok"
             icon={<CalendarCheck className="h-5 w-5" />}
           />
