@@ -1,21 +1,13 @@
-## Mudança
+## Botão "Recalcular conquistas do ano"
 
-`src/lib/gymrats-parser.ts` → `STRENGTH_TEXT_RE`: adicionar:
-- `treino\s*\d*\b` — captura "Treino", "Treino 5", "Treino 12", etc.
-- `come[cç]ando` — captura "Começando"
-- `membros\s+(?:inferiores|superiores)` — termos técnicos
+A server fn `recomputeAwards` já existe em `src/lib/import.functions.ts` (admin-only, recebe `{ year }` e regrava `annual_awards` rodando `computeAwards` sobre os check-ins do ano). Só falta UI.
 
-## Resultado esperado (Sandra)
+### Mudanças em `src/routes/importar.tsx`
 
-Todos os 17 dias caem em **Musculação**: Treino, Treino N, Começando, Membros inferiores.
+1. Importar `RefreshCw` (lucide) e `recomputeAwards` de `@/lib/import.functions`.
+2. Criar `recomputeMutation` com `useServerFn(recomputeAwards)` chamando `{ year: new Date().getFullYear() }`. `onSuccess` → toast + `router.invalidate()`.
+3. Renderizar um Card logo abaixo do título "Importar JSON do Gym Rats" (acima da dropzone), só visível para admin (já que a página inteira já bloqueia não-admin), com:
+   - Título "Recalcular conquistas do ano" + descrição curta ("Roda o cálculo de prêmios anuais sobre os check-ins já importados, sem reimportar JSON. Use depois de mudanças na lógica de classificação.").
+   - Botão `variant="secondary"` com `RefreshCw` (gira durante `isPending`) e label `Recalcular {ano}`.
 
-## Risco
-
-`treino` é genérico e pode capturar "treino de cardio". Mitigação: a precedência atual já é **strength > cardio > sport > mobility**, então um título tipo "Treino de cardio" cairia em musculação (errado). Mas:
-- A cascata textual só é usada como fallback quando NÃO há subs com duração. Quem registra via Apple Watch/Strava terá platform_activities e o regex não importa.
-- Quem escreve "Treino de cardio" provavelmente também marca `activity_type=running/cycling`, então pega no native primeiro.
-- Casos restantes (texto livre "treino de cardio" sem metadados) seriam falsos positivos raros — aceitável dado o ganho.
-
-## Validação
-
-Rerodar Sandra (0 sem categoria esperado) e Anne/Amanda/Allan/Guigaldi pra garantir que ninguém regride pra musculação errada.
+Sem mudanças de banco. Sem mudanças em outras rotas. Após clicar, os novos prêmios (`rust_enemy`, `influencer`) aparecem no Placar.
