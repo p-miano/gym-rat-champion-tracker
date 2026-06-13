@@ -24,24 +24,40 @@ export const listMonths = createServerFn({ method: "GET" }).handler(async () => 
     const rows = byMonth.get(m.id) ?? [];
     const winners = rows.filter((r) => r.is_winner);
     const lasts = rows.filter((r) => r.is_last);
+
+    // 2º e 3º: próximos ranks distintos depois do 1º (excluindo lanternas)
+    const nonWinner = rows
+      .filter((r) => !r.is_winner && !r.is_last)
+      .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+    const distinctRanks: number[] = [];
+    for (const r of nonWinner) {
+      const rk = r.rank as number;
+      if (!distinctRanks.includes(rk)) distinctRanks.push(rk);
+      if (distinctRanks.length >= 2) break;
+    }
+    const secondRank = distinctRanks[0];
+    const thirdRank = distinctRanks[1];
+    const seconds = secondRank != null ? nonWinner.filter((r) => r.rank === secondRank) : [];
+    const thirds = thirdRank != null ? nonWinner.filter((r) => r.rank === thirdRank) : [];
+
+    const mapRow = (w: any) => ({
+      athlete_id: w.athlete_id,
+      full_name: w.athletes?.full_name,
+      profile_picture_url: w.athletes?.profile_picture_url,
+      active_days: w.active_days,
+    });
+
     return {
       ...m,
-      winners: winners.map((w) => ({
-        athlete_id: w.athlete_id,
-        full_name: w.athletes?.full_name,
-        profile_picture_url: w.athletes?.profile_picture_url,
-        active_days: w.active_days,
-      })),
-      lasts: lasts.map((w) => ({
-        athlete_id: w.athlete_id,
-        full_name: w.athletes?.full_name,
-        profile_picture_url: w.athletes?.profile_picture_url,
-        active_days: w.active_days,
-      })),
+      winners: winners.map(mapRow),
+      seconds: seconds.map(mapRow),
+      thirds: thirds.map(mapRow),
+      lasts: lasts.map(mapRow),
       total_athletes: rows.length,
     };
   });
 });
+
 
 export const getMonth = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
