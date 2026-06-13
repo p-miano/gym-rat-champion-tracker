@@ -54,7 +54,7 @@ function topByScore(
   return bestKey;
 }
 
-function haversineKm(
+export function haversineKm(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number },
 ): number {

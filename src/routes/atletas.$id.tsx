@@ -29,6 +29,8 @@ import {
   extractPlatformActivities,
 } from "@/lib/gymrats-parser";
 import { useReverseGeocode } from "@/lib/use-reverse-geocode";
+import { haversineKm } from "@/lib/awards";
+
 
 const MONTH_NAMES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const COLORS = ["#b6ff1a", "#8bd926", "#5ec05f", "#f0b800", "#e26161", "#7e6cd9"];
@@ -233,63 +235,62 @@ function AthleteDetail() {
 
   // ─── Inteligência geográfica: QG / cidade base ──────────────────────────
   const geo = useMemo(() => {
+    const HOME_RADIUS_KM = 30;
+    const GRID = 0.05;
+
+    // Cidade base (texto) — só pra exibição
     const cityCount = new Map<string, number>();
-    let withCity = 0;
     for (const c of yearCheckIns) {
       const city = cityFromLocationName(c.location_name);
-      if (city) {
-        withCity++;
-        cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
-      }
+      if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
     }
     let baseCity: string | null = null;
-    let baseCount = 0;
+    let baseCityCount = 0;
     for (const [city, n] of cityCount) {
-      if (n > baseCount) {
+      if (n > baseCityCount) {
         baseCity = city;
-        baseCount = n;
+        baseCityCount = n;
       }
     }
-    const awayCity = withCity - baseCount;
 
-    // Fallback grid se não tiver location_name
-    let baseLat: number | null = null;
-    let baseLng: number | null = null;
-    let awayGrid = 0;
-    if (!baseCity) {
-      const GRID = 0.05;
-      const cells = new Map<string, { lat: number; lng: number; count: number }>();
-      for (const c of yearCheckIns) {
-        if (c.location_latitude == null || c.location_longitude == null) continue;
-        const k = `${Math.round(Number(c.location_latitude) / GRID)}:${Math.round(Number(c.location_longitude) / GRID)}`;
-        const cur = cells.get(k) ?? { lat: 0, lng: 0, count: 0 };
-        cur.lat += Number(c.location_latitude);
-        cur.lng += Number(c.location_longitude);
-        cur.count++;
-        cells.set(k, cur);
-      }
-      let best: { lat: number; lng: number; count: number } | null = null;
-      let total = 0;
-      for (const v of cells.values()) {
-        total += v.count;
-        if (!best || v.count > best.count) best = v;
-      }
-      if (best) {
-        baseLat = Number((best.lat / best.count).toFixed(5));
-        baseLng = Number((best.lng / best.count).toFixed(5));
-        awayGrid = total - best.count;
+    // QG real: cluster geográfico dominante (grade ~5km), independente de location_name
+    const cells = new Map<string, { lat: number; lng: number; count: number }>();
+    const geoPoints: { lat: number; lng: number }[] = [];
+    for (const c of yearCheckIns) {
+      if (c.location_latitude == null || c.location_longitude == null) continue;
+      const lat = Number(c.location_latitude);
+      const lng = Number(c.location_longitude);
+      geoPoints.push({ lat, lng });
+      const k = `${Math.round(lat / GRID)}:${Math.round(lng / GRID)}`;
+      const cur = cells.get(k) ?? { lat: 0, lng: 0, count: 0 };
+      cur.lat += lat;
+      cur.lng += lng;
+      cur.count++;
+      cells.set(k, cur);
+    }
+    let best: { lat: number; lng: number; count: number } | null = null;
+    for (const v of cells.values()) if (!best || v.count > best.count) best = v;
+    const baseLat = best ? Number((best.lat / best.count).toFixed(5)) : null;
+    const baseLng = best ? Number((best.lng / best.count).toFixed(5)) : null;
+
+    // awayCount = check-ins com coord a > 30km do QG (mesma regra do prêmio no_borders)
+    let awayCount = 0;
+    if (baseLat != null && baseLng != null) {
+      for (const p of geoPoints) {
+        if (haversineKm({ lat: baseLat, lng: baseLng }, p) > HOME_RADIUS_KM) awayCount++;
       }
     }
 
     return {
       baseCity,
-      baseCount,
-      awayCount: baseCity ? awayCity : awayGrid,
+      baseCount: baseCityCount,
+      awayCount,
       baseLat,
       baseLng,
-      hasAnyGeo: cityCount.size > 0 || baseLat !== null,
+      hasAnyGeo: baseLat !== null,
     };
   }, [yearCheckIns]);
+
 
   const monthsWon = month_results.filter((m: any) => m.is_winner).length;
   const monthsLast = month_results.filter((m: any) => m.is_last).length;
