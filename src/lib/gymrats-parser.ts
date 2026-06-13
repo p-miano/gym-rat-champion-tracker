@@ -404,8 +404,11 @@ export function parseCheckIn(c: GymRatsCheckIn): ParsedCheckIn {
 
   const activity_type = inferActivityType(c);
   const has_photo = !!c.photo_url;
-  const lat = parseDecimal(c.details?.location_latitude);
-  const lng = parseDecimal(c.details?.location_longitude);
+  const rawLat = parseDecimal(c.details?.location_latitude);
+  const rawLng = parseDecimal(c.details?.location_longitude);
+  // Privacy: truncate to 2 decimals (~1.1 km) so we never store/expose street-level precision.
+  const lat = rawLat == null ? null : Math.round(rawLat * 100) / 100;
+  const lng = rawLng == null ? null : Math.round(rawLng * 100) / 100;
 
   const validation = validateCheckIn({
     has_photo,
