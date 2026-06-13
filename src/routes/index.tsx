@@ -261,25 +261,26 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
   );
 }
 
-export function Avatar({ src, name, size = 40 }: { src?: string | null; name?: string | null; size?: number }) {
+export function Avatar({ src, name, size = 40, rounded = true }: { src?: string | null; name?: string | null; size?: number; rounded?: boolean }) {
   const initials = (name ?? "?")
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  const radius = rounded ? "rounded-lg" : "";
   return src ? (
     <img
       src={src}
       alt={name ?? ""}
       width={size}
       height={size}
-      className="border-2 border-border object-cover"
+      className={`border-2 border-border object-cover ${radius}`}
       style={{ width: size, height: size }}
     />
   ) : (
     <div
-      className="grid place-items-center border-2 border-border bg-secondary text-secondary-foreground"
+      className={`grid place-items-center border-2 border-border bg-secondary text-secondary-foreground ${radius}`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {initials}
