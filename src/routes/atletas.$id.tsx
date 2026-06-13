@@ -491,6 +491,12 @@ function AthleteDetail() {
             value={audit.outdoor}
           />
           <AuditRow
+            icon={<Heart className="h-4 w-4 text-primary" />}
+            label="Reações totais recebidas"
+            sub="alimenta o Topa tudo por biscoito 🍪"
+            value={totalReactions}
+          />
+          <AuditRow
             icon={<Laugh className="h-4 w-4 text-primary" />}
             label="Reações de risada 😂"
             sub="alimenta o Humorista do WOD"
