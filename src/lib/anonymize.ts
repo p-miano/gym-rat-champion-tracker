@@ -90,10 +90,12 @@ export function displayAthlete(athlete: AthleteLike, isAuthed: boolean): Display
   }
 
 
-  // Public visitor: honor athlete's preferences
+  // Public visitor: honor athlete's preferences.
+  // IMPORTANT: never display the Google account photo. When the athlete opts
+  // into showing a public photo, always use the official Gym Rats picture.
   const mode = athlete?.display_mode ?? "placeholder";
   if (mode === "real") {
-    const photo = athlete?.show_google_photo ? athlete?.google_photo_url ?? realPhoto : null;
+    const photo = athlete?.show_google_photo ? realPhoto : null;
     return {
       name: realName,
       photoUrl: photo,
@@ -102,7 +104,7 @@ export function displayAthlete(athlete: AthleteLike, isAuthed: boolean): Display
     };
   }
   if (mode === "nickname" && athlete?.public_nickname) {
-    const photo = athlete?.show_google_photo ? athlete?.google_photo_url ?? null : null;
+    const photo = athlete?.show_google_photo ? realPhoto : null;
     return {
       name: athlete.public_nickname,
       photoUrl: photo,
