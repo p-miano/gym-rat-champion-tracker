@@ -89,10 +89,6 @@ function OnboardingPage() {
       toast.error("Selecione o seu nome de atleta.");
       return;
     }
-    if (displayMode === "nickname" && !nickname.trim()) {
-      toast.error("Informe um apelido personalizado.");
-      return;
-    }
     setSubmitting(true);
     try {
       await completeCall({
@@ -100,7 +96,6 @@ function OnboardingPage() {
           group_code: code,
           athlete_id: athleteId,
           display_mode: displayMode,
-          public_nickname: displayMode === "nickname" ? nickname.trim() : null,
           show_google_photo: showPhoto === "yes",
         },
       });
