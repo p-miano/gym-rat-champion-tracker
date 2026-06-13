@@ -226,7 +226,7 @@ export function computeAwards(checkIns: AwardCheckIn[]): AwardResult[] {
           { lat: baseLat, lng: baseLng },
           { lat: c.location_latitude!, lng: c.location_longitude! },
         );
-        if (d >= HOME_RADIUS_KM) far++;
+        if (d > HOME_RADIUS_KM) far++;
         else home++;
       }
       score.set(aid, far);
