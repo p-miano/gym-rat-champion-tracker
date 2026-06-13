@@ -119,7 +119,8 @@ export const getMonth = createServerFn({ method: "GET" })
         .order("occurred_at"),
     ]);
     if (!month) throw new Error("Mês não encontrado");
-    return { month, results: results ?? [], check_ins: checkIns ?? [] };
+    const authed = await isCallerAuthenticated();
+    return { month, results: results ?? [], check_ins: scrubCheckIns(checkIns ?? [], authed) };
   });
 
 export const getAnnualStanding = createServerFn({ method: "GET" })
