@@ -64,7 +64,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         group_code: z.string().trim().min(1).max(32),
         athlete_id: z.string().uuid(),
         display_mode: DisplayMode,
-        public_nickname: z.string().trim().max(60).optional().nullable(),
         show_google_photo: z.boolean(),
       })
       .parse(d),
