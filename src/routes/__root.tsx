@@ -90,8 +90,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Atletas com Dorflex" },
       { name: "twitter:description", content: "Painel interativo do grupo Atletas com Dorflex. Acompanhe o ranking, o placar da temporada e as medalhas de conquistas dos atletas participantes." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8969a01c-be6c-4d5b-b6bc-61cba636da1f/id-preview-1b8fe1c4--f6f5c93a-6d19-43b1-af21-bcd03d296807.lovable.app-1781294924456.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8969a01c-be6c-4d5b-b6bc-61cba636da1f/id-preview-1b8fe1c4--f6f5c93a-6d19-43b1-af21-bcd03d296807.lovable.app-1781294924456.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/9vpnH1EHE3NlNmL9fvqq5EYQvIU2/social-images/social-1781376250768-Tela.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/9vpnH1EHE3NlNmL9fvqq5EYQvIU2/social-images/social-1781376250768-Tela.webp" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
