@@ -302,17 +302,8 @@ export function computeAwards(checkIns: AwardCheckIn[]): AwardResult[] {
     add("phoenix", winner, { comebacks: winner ? score.get(winner) : 0 });
   }
 
-  // 9. early_bird
-  {
-    const score = new Map<string, number>();
-    for (const [aid, list] of byAthlete) {
-      let n = 0;
-      for (const c of list) if (spHour(c.occurred_at) < 7) n++;
-      score.set(aid, n);
-    }
-    const winner = topByScore(score);
-    add("early_bird", winner, { early_checkins: winner ? score.get(winner) : 0 });
-  }
+  // (early_bird removido: virou perfil dinâmico no perfil do atleta)
+
 
   // 10. night_owl
   {
