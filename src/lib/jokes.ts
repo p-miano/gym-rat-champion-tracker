@@ -79,9 +79,10 @@ export const AWARD_META: Record<
   },
   influencer: {
     emoji: "📣",
-    title: "Influencer",
+    title: "Topa tudo por biscoito",
     short: "Mais reações recebidas nos check-ins.",
   },
+
 
   bodybuilding_beast: {
     emoji: "💪",
