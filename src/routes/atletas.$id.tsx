@@ -398,6 +398,9 @@ function AthleteDetail() {
                 </Badge>
               )}
             </div>
+            {timeProfile && (
+              <p className="mt-1 text-sm text-muted-foreground italic">{timeProfile.description}</p>
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
               {monthsWon > 0 && (
                 <Badge className="gap-1"><Trophy className="h-3 w-3" />{monthsWon}x campeão</Badge>
