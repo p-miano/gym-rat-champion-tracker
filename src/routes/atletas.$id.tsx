@@ -18,7 +18,7 @@ import {
   CalendarX,
   Plane,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+
 import { getAthlete } from "@/lib/data.functions";
 import { Avatar } from "./index";
 import { AWARD_META, jokeFor } from "@/lib/jokes";
@@ -33,7 +33,7 @@ import { haversineKm } from "@/lib/awards";
 
 
 const MONTH_NAMES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-const COLORS = ["#b6ff1a", "#8bd926", "#5ec05f", "#f0b800", "#e26161", "#7e6cd9"];
+
 
 const opts = (id: string) =>
   queryOptions({ queryKey: ["athlete", id], queryFn: () => getAthlete({ data: { id } }) });
@@ -223,15 +223,7 @@ function AthleteDetail() {
     };
   }, [yearCheckIns]);
 
-  // ─── DNA Maromba ────────────────────────────────────────────────────────
-  const dna = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const c of yearCheckIns) {
-      const k = c.activity_type ?? "indefinido";
-      map.set(k, (map.get(k) ?? 0) + 1);
-    }
-    return [...map.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [yearCheckIns]);
+
 
   // ─── Inteligência geográfica: QG / cidade base ──────────────────────────
   const geo = useMemo(() => {
