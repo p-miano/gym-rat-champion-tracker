@@ -382,11 +382,11 @@ function AthleteDetail() {
           ← Todos os atletas
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-4">
-          <Avatar src={athlete.profile_picture_url} name={athlete.full_name} size={88} shape="rounded" />
+          <AthleteAvatar athlete={athlete} size={88} shape="rounded" />
           <div className="flex-1 min-w-0">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Prontuário {year}</div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+              <h1 className="display text-4xl text-lime truncate"><AthleteName athlete={athlete} /></h1>
               {timeProfile && (
                 <Badge
                   variant="outline"
