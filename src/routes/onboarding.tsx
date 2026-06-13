@@ -168,33 +168,21 @@ function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Como você deseja aparecer para visitantes públicos?</Label>
+                <Label>Modo de Exibição Pública</Label>
                 <RadioGroup
                   value={displayMode}
-                  onValueChange={(v) => setDisplayMode(v as any)}
+                  onValueChange={(v) => setDisplayMode(v as "placeholder" | "real")}
                   className="space-y-2"
                 >
                   <label className="flex items-center gap-2">
                     <RadioGroupItem value="placeholder" id="dm-p" />
-                    <span>Manter nome fictício aleatório</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <RadioGroupItem value="nickname" id="dm-n" />
-                    <span>Usar um apelido personalizado</span>
+                    <span>Manter Anônimo (exibe o nome aleatório gerado pelo app)</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <RadioGroupItem value="real" id="dm-r" />
-                    <span>Mostrar meu nome real</span>
+                    <span>Exibir Nome Real (exibe o nome oficial do Gym Rats)</span>
                   </label>
                 </RadioGroup>
-                {displayMode === "nickname" && (
-                  <Input
-                    placeholder="Seu apelido"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    maxLength={60}
-                  />
-                )}
               </div>
 
               <div className="space-y-2">
