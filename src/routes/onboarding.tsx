@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ function OnboardingPage() {
   const validateCall = useServerFn(validateGroupCode);
   const completeCall = useServerFn(completeOnboarding);
   const stateCall = useServerFn(getMyOnboardingState);
+  const checkedRef = useRef(false);
 
   const [checking, setChecking] = useState(true);
   const [code, setCode] = useState("");
@@ -70,9 +71,13 @@ function OnboardingPage() {
     }
 
     (async () => {
+      if (checkedRef.current) return;
+      checkedRef.current = true;
+
       const session = await waitForSession();
       if (cancelled) return;
       if (!session) {
+        checkedRef.current = false;
         router.navigate({ to: "/auth" });
         return;
       }
