@@ -87,6 +87,16 @@ export const importMonth = createServerFn({ method: "POST" })
       .single();
     if (monthErr || !monthRow) throw new Error(monthErr?.message ?? "Falha ao salvar mês");
 
+    // Register the GymRats group so onboarding can validate codes against it
+    if (parsed.source_id) {
+      await supabaseAdmin
+        .from("valid_groups")
+        .upsert(
+          { gymrats_group_id: parsed.source_id, name: parsed.name },
+          { onConflict: "gymrats_group_id" },
+        );
+    }
+
     // Upsert athletes
     const athleteRows = parsed.members.map((m) => ({
       gymrats_id: m.id,
