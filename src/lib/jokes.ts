@@ -114,11 +114,6 @@ export const AWARD_META: Record<
     title: "A Fênix",
     short: "Voltou de um hiato e engatou a meta.",
   },
-  early_bird: {
-    emoji: "🌅",
-    title: "Psicopata das 5h",
-    short: "Mais treinos antes das 7h.",
-  },
   night_owl: {
     emoji: "🦉",
     title: "Corujão",
