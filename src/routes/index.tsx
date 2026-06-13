@@ -204,7 +204,7 @@ function HomePage() {
                 <div className="display text-2xl">{lastMonth.name}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
                   {lastMonth.winners.length > 0
-                    ? `Campe${lastMonth.winners.length > 1 ? "ões" : "ão"}: ${lastMonth.winners.map((w: any) => w.full_name).join(", ")}`
+                    ? `Campe${lastMonth.winners.length > 1 ? "ões" : "ão"}: ${lastMonth.winners.map((w: any) => displayAthlete(w, authed).name).join(", ")}`
                     : "Sem campeão ainda."}
                 </div>
               </div>
