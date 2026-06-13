@@ -103,8 +103,8 @@ function HomePage() {
                       <td className="px-3 py-2 font-condensed text-lg text-lime">{i + 1}</td>
                       <td className="px-3 py-2">
                         <Link to="/atletas/$id" params={{ id: row.athlete_id }} className="flex items-center gap-3 hover:underline">
-                          <Avatar src={row.athlete?.profile_picture_url} name={row.athlete?.full_name} size={32} />
-                          <span className="font-medium">{row.athlete?.full_name}</span>
+                          <AthleteAvatar athlete={row.athlete} size={32} />
+                          <span className="font-medium"><AthleteName athlete={row.athlete} /></span>
                         </Link>
                       </td>
                       <td className="px-3 py-2 text-right font-condensed text-xl">{row.active_days}</td>
@@ -155,8 +155,8 @@ function HomePage() {
                             params={{ id: a.athlete_id }}
                             className="mt-3 flex items-center gap-2 hover:underline"
                           >
-                            <Avatar src={a.athlete?.profile_picture_url} name={a.athlete?.full_name} size={28} />
-                            <span className="font-medium truncate">{a.athlete?.full_name}</span>
+                            <AthleteAvatar athlete={a.athlete} size={28} />
+                            <span className="font-medium truncate"><AthleteName athlete={a.athlete} /></span>
                             {detailText && (
                               <span className="ml-auto font-condensed text-xs uppercase tracking-wider text-muted-foreground">
                                 {detailText}
@@ -182,8 +182,8 @@ function HomePage() {
             {(standing.lasts ?? []).map((l: any) => (
               <Link key={l.athlete_id} to="/atletas/$id" params={{ id: l.athlete_id }}>
                 <div className="flex items-center gap-3 border-2 border-destructive/60 bg-destructive/10 px-3 py-2 text-sm transition-colors hover:bg-destructive/20">
-                  <Avatar src={l.athlete?.profile_picture_url} name={l.athlete?.full_name} size={28} />
-                  <span className="font-medium">{l.athlete?.full_name}</span>
+                  <AthleteAvatar athlete={l.athlete} size={28} />
+                  <span className="font-medium"><AthleteName athlete={l.athlete} /></span>
                   <Badge variant="destructive" className="ml-1 font-condensed">{l.count}x lanterna</Badge>
                 </div>
               </Link>
