@@ -252,8 +252,8 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
       <div className="mt-4 flex flex-wrap items-end justify-center gap-4">
         {athletes.map((a) => (
           <Link key={a?.id} to="/atletas/$id" params={{ id: a?.id ?? "" }} className="flex flex-col items-center hover:opacity-90">
-            <Avatar src={a?.profile_picture_url} name={a?.full_name} size={56} />
-            <div className="display mt-2 text-lg leading-tight">{a?.full_name}</div>
+            <AthleteAvatar athlete={a} size={56} />
+            <div className="display mt-2 text-lg leading-tight"><AthleteName athlete={a} /></div>
           </Link>
         ))}
       </div>
