@@ -294,6 +294,30 @@ export type Database = {
         }
         Relationships: []
       }
+      valid_group_codes: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          code: string
+          gymrats_group_id: number
+          label: string | null
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          code: string
+          gymrats_group_id: number
+          label?: string | null
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          code?: string
+          gymrats_group_id?: number
+          label?: string | null
+        }
+        Relationships: []
+      }
       valid_groups: {
         Row: {
           added_at: string
