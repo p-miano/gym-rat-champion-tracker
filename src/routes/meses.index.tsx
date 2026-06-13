@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Skull } from "lucide-react";
+import { Trophy, Skull, Medal, Award } from "lucide-react";
 import { listMonths } from "@/lib/data.functions";
 import { Avatar } from "./index";
 
@@ -48,6 +48,24 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.winners.map((w: any) => (
+                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                      ))
+                    )}
+                  </Row>
+                  <Row icon={<Medal className="h-4 w-4 text-foreground/70" />} label="2º lugar">
+                    {m.seconds.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      m.seconds.map((w: any) => (
+                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                      ))
+                    )}
+                  </Row>
+                  <Row icon={<Award className="h-4 w-4 text-foreground/70" />} label="3º lugar">
+                    {m.thirds.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      m.thirds.map((w: any) => (
                         <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
                       ))
                     )}
