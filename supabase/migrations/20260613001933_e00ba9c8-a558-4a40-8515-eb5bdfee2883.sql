@@ -1,0 +1,1 @@
+DELETE FROM public.annual_awards WHERE award_key = 'voucher_limit';
