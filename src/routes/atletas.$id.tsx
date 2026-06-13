@@ -28,6 +28,7 @@ import {
   isOutdoor,
   extractPlatformActivities,
 } from "@/lib/gymrats-parser";
+import { useReverseGeocode } from "@/lib/use-reverse-geocode";
 
 const MONTH_NAMES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const COLORS = ["#b6ff1a", "#8bd926", "#5ec05f", "#f0b800", "#e26161", "#7e6cd9"];
