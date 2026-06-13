@@ -49,11 +49,6 @@ const POOL: Record<string, string[]> = {
     "Ressurgiu das cinzas (e do sofá).",
     "Fênix? Mais pra Fênix da Garoa, mas valeu o retorno.",
   ],
-  early_bird: [
-    "Treina antes do galo cantar. Tem alguma coisa errada com você.",
-    "Psicopata das 5h da manhã. Por favor, durma.",
-    "Acorda cedo só pra esfregar na cara dos outros.",
-  ],
   night_owl: [
     "Fecha a academia. Os funcionários já te chamam pelo nome.",
     "Corujão. Treino é só desculpa pra não dormir.",
