@@ -72,14 +72,21 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const codeNum = Number(data.group_code.replace(/\D/g, ""));
+    const raw = data.group_code.trim();
+    const digits = raw.replace(/\D/g, "");
+    const codeNum = digits ? Number(digits) : NaN;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: group } = await supabaseAdmin
+    let gquery = supabaseAdmin
       .from("valid_groups")
-      .select("gymrats_group_id")
-      .eq("gymrats_group_id", codeNum)
-      .maybeSingle();
+      .select("gymrats_group_id");
+    if (Number.isFinite(codeNum) && codeNum > 0) {
+      gquery = gquery.or(`gymrats_group_id.eq.${codeNum},name.ilike.%${raw}%`);
+    } else {
+      gquery = gquery.ilike("name", `%${raw}%`);
+    }
+    const { data: groups } = await gquery.limit(1);
+    const group = groups?.[0];
     if (!group) throw new Error("Código do grupo inválido ou não encontrado.");
 
     // Ensure athlete exists and is not already claimed by someone else
