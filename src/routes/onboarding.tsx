@@ -56,13 +56,13 @@ function OnboardingPage() {
       if (data.session?.access_token) return data.session;
       return await new Promise<typeof data.session>((resolve) => {
         const timer = setTimeout(() => {
-          sub.subscription.unsubscribe();
+          sub.data.subscription.unsubscribe();
           resolve(null);
         }, timeoutMs);
         const sub = supabase.auth.onAuthStateChange((_e, session) => {
           if (session?.access_token) {
             clearTimeout(timer);
-            sub.subscription.unsubscribe();
+            sub.data.subscription.unsubscribe();
             resolve(session);
           }
         });
