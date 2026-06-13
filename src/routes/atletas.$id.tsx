@@ -356,24 +356,7 @@ function AthleteDetail() {
       <section>
         <SectionTitle icon={<MapPin className="h-4 w-4" />} text="Inteligência Geográfica" />
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card/60 p-5">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">QG · Cidade Base</div>
-            {geo.baseCity ? (
-              <>
-                <div className="mt-1 display text-3xl text-lime truncate">{geo.baseCity}</div>
-                <div className="text-sm text-muted-foreground">{geo.baseCount} check-ins na base</div>
-              </>
-            ) : geo.baseLat !== null ? (
-              <>
-                <div className="mt-1 display text-2xl text-lime">
-                  {geo.baseLat?.toFixed(3)}, {geo.baseLng?.toFixed(3)}
-                </div>
-                <div className="text-sm text-muted-foreground">cluster geográfico (sem cidade definida)</div>
-              </>
-            ) : (
-              <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
-            )}
-          </div>
+          <GeoBaseCard geo={geo} />
           <div className="rounded-xl border border-border bg-card/60 p-5">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
               <Plane className="h-3.5 w-3.5" /> Treinos Fora da Base
@@ -389,6 +372,7 @@ function AthleteDetail() {
           </div>
         </div>
       </section>
+
 
       {/* ─── DNA Maromba ─── */}
       <section>
