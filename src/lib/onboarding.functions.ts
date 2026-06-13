@@ -28,28 +28,26 @@ export const validateGroupCode = createServerFn({ method: "POST" })
     z.object({ code: z.string().trim().min(1).max(32) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const raw = data.code.trim();
-    const digits = raw.replace(/\D/g, "");
-    const codeNum = digits ? Number(digits) : NaN;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let query = supabaseAdmin
-      .from("valid_groups")
-      .select("gymrats_group_id, name");
-    if (Number.isFinite(codeNum) && codeNum > 0) {
-      query = query.or(`gymrats_group_id.eq.${codeNum},name.ilike.%${raw}%`);
-    } else {
-      query = query.ilike("name", `%${raw}%`);
+    const code = data.code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length < 4) {
+      throw new Error("Código inválido. Use o código de convite do GymRats fornecido pelo administrador.");
     }
-    const { data: groups } = await query.limit(1);
-    const group = groups?.[0];
-    if (!group) throw new Error("Código do grupo inválido ou não encontrado. Peça ao administrador o ID numérico do grupo no GymRats.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("valid_group_codes")
+      .select("code, gymrats_group_id, label")
+      .eq("code", code)
+      .maybeSingle();
+    if (!row) {
+      throw new Error("Código inválido. Use o código de convite do GymRats fornecido pelo administrador.");
+    }
 
     const { data: athletes } = await supabaseAdmin
       .from("athletes")
       .select("id, full_name, claimed_by_user_id")
       .order("full_name");
     return {
-      group,
+      group: { gymrats_group_id: row.gymrats_group_id, name: row.label ?? "" },
       athletes: (athletes ?? []).map((a) => ({
         id: a.id as string,
         full_name: a.full_name as string,
