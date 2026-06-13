@@ -376,29 +376,6 @@ function AthleteDetail() {
       </section>
 
 
-      {/* ─── DNA Maromba ─── */}
-      <section>
-        <SectionTitle icon={<Activity className="h-4 w-4" />} text="DNA Maromba" />
-        <Card>
-          <CardContent className="pt-6">
-            {dna.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Sem dados.</div>
-            ) : (
-              <div className="h-64">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie data={dna} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-                      {dna.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: "oklch(0.21 0.015 140)", border: "1px solid oklch(0.30 0.02 140)", borderRadius: 8 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
       {/* ─── Auditoria de categorias ─── */}
       <section>
         <SectionTitle icon={<Trophy className="h-4 w-4" />} text="Painel de Auditoria · Métricas do Placar Geral" />
