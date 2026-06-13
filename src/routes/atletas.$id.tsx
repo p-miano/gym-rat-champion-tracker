@@ -390,7 +390,7 @@ function AthleteDetail() {
       {/* ─── Performance: meta semanal ─── */}
       <section>
         <SectionTitle icon={<Activity className="h-4 w-4" />} text="Performance · Meta 3x por semana" />
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <BigStat
             label="Dias Ativos Totais"
             value={audit.activeDays}
@@ -410,8 +410,16 @@ function AthleteDetail() {
             tone={weekly.debt > 0 ? "danger" : "muted"}
             icon={<CalendarX className="h-5 w-5" />}
           />
+          <BigStat
+            label="Reações Recebidas"
+            value={totalReactions}
+            sub="auditoria do Topa tudo por biscoito 📣"
+            tone={totalReactions > 0 ? "lime" : "muted"}
+            icon={<Heart className="h-5 w-5" />}
+          />
         </div>
       </section>
+
 
       {/* ─── Localização ─── */}
       <section>
