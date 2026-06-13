@@ -1,5 +1,42 @@
 // Public read server functions (use admin client inside handler for safe projections).
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+
+async function isCallerAuthenticated(): Promise<boolean> {
+  try {
+    const request = getRequest();
+    const auth = request?.headers?.get("authorization");
+    if (!auth || !auth.startsWith("Bearer ")) return false;
+    const token = auth.replace("Bearer ", "");
+    if (!token) return false;
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return false;
+    const { createClient } = await import("@supabase/supabase-js");
+    const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    });
+    const { data, error } = await client.auth.getClaims(token);
+    return !error && !!data?.claims?.sub;
+  } catch {
+    return false;
+  }
+}
+
+function coarsen(v: number | null | undefined): number | null {
+  if (v == null) return null;
+  return Math.round(Number(v) * 100) / 100;
+}
+
+function scrubCheckIns<T extends Record<string, any>>(rows: T[], authed: boolean): T[] {
+  if (authed) return rows;
+  return rows.map((r) => ({
+    ...r,
+    raw: null,
+    location_latitude: coarsen(r.location_latitude),
+    location_longitude: coarsen(r.location_longitude),
+  }));
+}
 
 export const listMonths = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -82,7 +119,8 @@ export const getMonth = createServerFn({ method: "GET" })
         .order("occurred_at"),
     ]);
     if (!month) throw new Error("Mês não encontrado");
-    return { month, results: results ?? [], check_ins: checkIns ?? [] };
+    const authed = await isCallerAuthenticated();
+    return { month, results: results ?? [], check_ins: scrubCheckIns(checkIns ?? [], authed) };
   });
 
 export const getAnnualStanding = createServerFn({ method: "GET" })
@@ -195,9 +233,10 @@ export const getAthlete = createServerFn({ method: "GET" })
       supabaseAdmin.from("check_ins").select("occurred_at").order("occurred_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (!athlete) throw new Error("Atleta não encontrado");
+    const authed = await isCallerAuthenticated();
     return {
       athlete,
-      check_ins: checkIns ?? [],
+      check_ins: scrubCheckIns(checkIns ?? [], authed),
       month_results: monthResults ?? [],
       awards: awards ?? [],
       dataset_max_occurred_at: (maxRow?.occurred_at as string | null) ?? null,
