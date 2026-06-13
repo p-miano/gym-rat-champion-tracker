@@ -28,17 +28,21 @@ export const validateGroupCode = createServerFn({ method: "POST" })
     z.object({ code: z.string().trim().min(1).max(32) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const codeNum = Number(data.code.replace(/\D/g, ""));
-    if (!Number.isFinite(codeNum) || codeNum <= 0) {
-      throw new Error("Código do grupo inválido ou não encontrado.");
-    }
+    const raw = data.code.trim();
+    const digits = raw.replace(/\D/g, "");
+    const codeNum = digits ? Number(digits) : NaN;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: group } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("valid_groups")
-      .select("gymrats_group_id, name")
-      .eq("gymrats_group_id", codeNum)
-      .maybeSingle();
-    if (!group) throw new Error("Código do grupo inválido ou não encontrado.");
+      .select("gymrats_group_id, name");
+    if (Number.isFinite(codeNum) && codeNum > 0) {
+      query = query.or(`gymrats_group_id.eq.${codeNum},name.ilike.%${raw}%`);
+    } else {
+      query = query.ilike("name", `%${raw}%`);
+    }
+    const { data: groups } = await query.limit(1);
+    const group = groups?.[0];
+    if (!group) throw new Error("Código do grupo inválido ou não encontrado. Peça ao administrador o ID numérico do grupo no GymRats.");
 
     const { data: athletes } = await supabaseAdmin
       .from("athletes")
@@ -68,14 +72,21 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const codeNum = Number(data.group_code.replace(/\D/g, ""));
+    const raw = data.group_code.trim();
+    const digits = raw.replace(/\D/g, "");
+    const codeNum = digits ? Number(digits) : NaN;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: group } = await supabaseAdmin
+    let gquery = supabaseAdmin
       .from("valid_groups")
-      .select("gymrats_group_id")
-      .eq("gymrats_group_id", codeNum)
-      .maybeSingle();
+      .select("gymrats_group_id");
+    if (Number.isFinite(codeNum) && codeNum > 0) {
+      gquery = gquery.or(`gymrats_group_id.eq.${codeNum},name.ilike.%${raw}%`);
+    } else {
+      gquery = gquery.ilike("name", `%${raw}%`);
+    }
+    const { data: groups } = await gquery.limit(1);
+    const group = groups?.[0];
     if (!group) throw new Error("Código do grupo inválido ou não encontrado.");
 
     // Ensure athlete exists and is not already claimed by someone else
