@@ -48,7 +48,7 @@ export function SiteHeader() {
           <NavLink to="/atletas">Atletas</NavLink>
         </nav>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {email ? (
+          {signedIn ? (
             <>
               {isAdmin && (
                 <Link to="/importar">
