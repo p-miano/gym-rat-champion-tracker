@@ -237,18 +237,44 @@ function AthleteDetail() {
       key: string;
       label: string;
       emoji: string;
+      description: string;
       match: (m: number) => boolean;
     }> = [
-      { key: "psicopata", label: "Psicopata das 5h", emoji: "⏰", match: (m) => m >= 5 * 60 && m < 8 * 60 },
+      {
+        key: "psicopata",
+        label: "Psicopata das 5h",
+        emoji: "⏰",
+        description: "Disciplina de monge, agenda de CEO e indícios de que precisa de terapia.",
+        match: (m) => m >= 5 * 60 && m < 8 * 60,
+      },
       {
         key: "herdeiro",
         label: "Herdeiro",
         emoji: "👑",
+        description: "Treina no horário de quem já nasceu com a vida ganha.",
         match: (m) => (m >= 8 * 60 && m <= 11 * 60 + 29) || (m >= 13 * 60 + 31 && m < 18 * 60),
       },
-      { key: "clt", label: "CLT que bate cartão", emoji: "💼", match: (m) => m >= 11 * 60 + 30 && m <= 13 * 60 + 30 },
-      { key: "revezamento", label: "Mestre do Revezamento", emoji: "👥", match: (m) => m >= 18 * 60 && m <= 20 * 60 + 29 },
-      { key: "vampiro", label: "Vampiro Noturno", emoji: "🦇", match: (m) => m >= 20 * 60 + 30 && m <= 23 * 60 + 59 },
+      {
+        key: "clt",
+        label: "CLT que bate cartão",
+        emoji: "💼",
+        description: "O herói que cronometra o descanso com o relógio do ponto.",
+        match: (m) => m >= 11 * 60 + 30 && m <= 13 * 60 + 30,
+      },
+      {
+        key: "revezamento",
+        label: "Mestre do Revezamento",
+        emoji: "👥",
+        description: "Não perde uma fofoca, adora um revezamento de aparelho e ama o agito da academia cheia.",
+        match: (m) => m >= 18 * 60 && m <= 20 * 60 + 29,
+      },
+      {
+        key: "vampiro",
+        label: "Vampiro Noturno",
+        emoji: "🦇",
+        description: "Só pisa no treino quando o sol sumiu e as luzes já estão quase apagando.",
+        match: (m) => m >= 20 * 60 + 30 && m <= 23 * 60 + 59,
+      },
     ];
     const counts = new Map<string, number>();
     let total = 0;
@@ -272,7 +298,14 @@ function AthleteDetail() {
         bestN = n;
       }
     }
-    return { label: best.label, emoji: best.emoji, count: bestN, total, pct: Math.round((bestN / total) * 100) };
+    return {
+      label: best.label,
+      emoji: best.emoji,
+      description: best.description,
+      count: bestN,
+      total,
+      pct: Math.round((bestN / total) * 100),
+    };
   }, [yearCheckIns]);
 
 
@@ -365,6 +398,9 @@ function AthleteDetail() {
                 </Badge>
               )}
             </div>
+            {timeProfile && (
+              <p className="mt-1 text-sm text-muted-foreground italic">{timeProfile.description}</p>
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
               {monthsWon > 0 && (
                 <Badge className="gap-1"><Trophy className="h-3 w-3" />{monthsWon}x campeão</Badge>
@@ -390,7 +426,7 @@ function AthleteDetail() {
       {/* ─── Performance: meta semanal ─── */}
       <section>
         <SectionTitle icon={<Activity className="h-4 w-4" />} text="Performance · Meta 3x por semana" />
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3">
           <BigStat
             label="Dias Ativos Totais"
             value={audit.activeDays}
@@ -409,13 +445,6 @@ function AthleteDetail() {
             sub={weekly.debt > 0 ? "alerta do tio Dorflex" : "limpo, sem dívidas"}
             tone={weekly.debt > 0 ? "danger" : "muted"}
             icon={<CalendarX className="h-5 w-5" />}
-          />
-          <BigStat
-            label="Reações Recebidas"
-            value={totalReactions}
-            sub="auditoria do Topa tudo por biscoito 📣"
-            tone={totalReactions > 0 ? "lime" : "muted"}
-            icon={<Heart className="h-5 w-5" />}
           />
         </div>
       </section>
@@ -496,6 +525,12 @@ function AthleteDetail() {
             label="Treinos Ao Ar Livre"
             sub="alimenta o Amante da Natureza 🌿"
             value={audit.outdoor}
+          />
+          <AuditRow
+            icon={<Heart className="h-4 w-4 text-primary" />}
+            label="Reações totais recebidas"
+            sub="alimenta o Topa tudo por biscoito 🍪"
+            value={totalReactions}
           />
           <AuditRow
             icon={<Laugh className="h-4 w-4 text-primary" />}
