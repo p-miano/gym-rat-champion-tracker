@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ImportarRouteImport } from './routes/importar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as AtletasIndexRouteImport } from './routes/atletas.index'
 import { Route as MesesIdRouteImport } from './routes/meses.$id'
 import { Route as AtletasIdRouteImport } from './routes/atletas.$id'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImportarRoute = ImportarRouteImport.update({
   id: '/importar',
   path: '/importar',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/importar': typeof ImportarRoute
+  '/onboarding': typeof OnboardingRoute
   '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
   '/atletas/': typeof AtletasIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/importar': typeof ImportarRoute
+  '/onboarding': typeof OnboardingRoute
   '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
   '/atletas': typeof AtletasIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/importar': typeof ImportarRoute
+  '/onboarding': typeof OnboardingRoute
   '/atletas/$id': typeof AtletasIdRoute
   '/meses/$id': typeof MesesIdRoute
   '/atletas/': typeof AtletasIndexRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/importar'
+    | '/onboarding'
     | '/atletas/$id'
     | '/meses/$id'
     | '/atletas/'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/importar'
+    | '/onboarding'
     | '/atletas/$id'
     | '/meses/$id'
     | '/atletas'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/importar'
+    | '/onboarding'
     | '/atletas/$id'
     | '/meses/$id'
     | '/atletas/'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ImportarRoute: typeof ImportarRoute
+  OnboardingRoute: typeof OnboardingRoute
   AtletasIdRoute: typeof AtletasIdRoute
   MesesIdRoute: typeof MesesIdRoute
   AtletasIndexRoute: typeof AtletasIndexRoute
@@ -123,6 +136,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/importar': {
       id: '/importar'
       path: '/importar'
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ImportarRoute: ImportarRoute,
+  OnboardingRoute: OnboardingRoute,
   AtletasIdRoute: AtletasIdRoute,
   MesesIdRoute: MesesIdRoute,
   AtletasIndexRoute: AtletasIndexRoute,
@@ -187,3 +208,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
