@@ -657,7 +657,7 @@ function GeoBaseCard({
               {data?.display ?? "Localização aproximada"}
             </div>
           )}
-          <div className="text-sm text-muted-foreground">QG · cluster geográfico</div>
+          <div className="text-sm text-muted-foreground whitespace-pre-line">{"\n"}</div>
         </>
       ) : (
         <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
