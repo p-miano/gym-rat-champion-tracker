@@ -185,8 +185,15 @@ export function isOutdoor(c: ClassifyInput): boolean {
   const t = (c.activity_type ?? "").toLowerCase();
   if (INDOOR_TYPES.has(t)) return false;
   if (OUTDOOR_TYPES.has(t)) return true;
-  const blob = `${c.title ?? ""} ${c.description ?? ""}`.toLowerCase();
-  return OUTDOOR_TEXT_RE.test(blob);
+  // Precedência: descrição antes do título. Se qualquer um casar como
+  // strength textual, trata como indoor (academia) antes de testar outdoor.
+  const desc = (c.description ?? "").toLowerCase();
+  const title = (c.title ?? "").toLowerCase();
+  if (STRENGTH_TEXT_RE.test(desc)) return false;
+  if (STRENGTH_TEXT_RE.test(title)) return false;
+  if (OUTDOOR_TEXT_RE.test(desc)) return true;
+  if (OUTDOOR_TEXT_RE.test(title)) return true;
+  return false;
 }
 
 const STRENGTH_TYPES = new Set([
