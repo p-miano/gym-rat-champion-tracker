@@ -70,22 +70,16 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const raw = data.group_code.trim();
-    const digits = raw.replace(/\D/g, "");
-    const codeNum = digits ? Number(digits) : NaN;
+    const code = data.group_code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length < 4) throw new Error("Código inválido.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    let gquery = supabaseAdmin
-      .from("valid_groups")
-      .select("gymrats_group_id");
-    if (Number.isFinite(codeNum) && codeNum > 0) {
-      gquery = gquery.or(`gymrats_group_id.eq.${codeNum},name.ilike.%${raw}%`);
-    } else {
-      gquery = gquery.ilike("name", `%${raw}%`);
-    }
-    const { data: groups } = await gquery.limit(1);
-    const group = groups?.[0];
-    if (!group) throw new Error("Código do grupo inválido ou não encontrado.");
+    const { data: row } = await supabaseAdmin
+      .from("valid_group_codes")
+      .select("gymrats_group_id")
+      .eq("code", code)
+      .maybeSingle();
+    if (!row) throw new Error("Código inválido. Use o código de convite do GymRats fornecido pelo administrador.");
 
     // Ensure athlete exists and is not already claimed by someone else
     const { data: athlete } = await supabaseAdmin
