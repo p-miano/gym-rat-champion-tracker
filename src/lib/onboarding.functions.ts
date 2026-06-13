@@ -110,10 +110,9 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .update({
         claimed_by_user_id: context.userId,
         display_mode: data.display_mode,
-        public_nickname: data.public_nickname ?? null,
         show_google_photo: data.show_google_photo,
         google_photo_url: googlePhoto,
-      })
+      } as any)
       .eq("id", data.athlete_id);
     if (athErr) throw new Error(athErr.message);
 
