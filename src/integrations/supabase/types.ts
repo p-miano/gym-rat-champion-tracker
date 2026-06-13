@@ -48,25 +48,40 @@ export type Database = {
       }
       athletes: {
         Row: {
+          claimed_by_user_id: string | null
           created_at: string
+          display_mode: string
           full_name: string
+          google_photo_url: string | null
           gymrats_id: number
           id: string
           profile_picture_url: string | null
+          public_nickname: string | null
+          show_google_photo: boolean
         }
         Insert: {
+          claimed_by_user_id?: string | null
           created_at?: string
+          display_mode?: string
           full_name: string
+          google_photo_url?: string | null
           gymrats_id: number
           id?: string
           profile_picture_url?: string | null
+          public_nickname?: string | null
+          show_google_photo?: boolean
         }
         Update: {
+          claimed_by_user_id?: string | null
           created_at?: string
+          display_mode?: string
           full_name?: string
+          google_photo_url?: string | null
           gymrats_id?: number
           id?: string
           profile_picture_url?: string | null
+          public_nickname?: string | null
+          show_google_photo?: boolean
         }
         Relationships: []
       }
@@ -234,18 +249,32 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          linked_athlete_id: string | null
+          onboarded_at: string | null
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
+          linked_athlete_id?: string | null
+          onboarded_at?: string | null
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
+          linked_athlete_id?: string | null
+          onboarded_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_linked_athlete_id_fkey"
+            columns: ["linked_athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -262,6 +291,24 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      valid_groups: {
+        Row: {
+          added_at: string
+          gymrats_group_id: number
+          name: string
+        }
+        Insert: {
+          added_at?: string
+          gymrats_group_id: number
+          name: string
+        }
+        Update: {
+          added_at?: string
+          gymrats_group_id?: number
+          name?: string
         }
         Relationships: []
       }
