@@ -170,6 +170,23 @@ function ImportPage() {
               <Stat label="Válidos" value={parsed.check_ins.length - invalid} good />
               <Stat label="Flagrados" value={invalid} danger />
             </div>
+            <div className="space-y-1">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                Código do convite (GymRats)
+              </label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) =>
+                  setInviteCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32))
+                }
+                placeholder="EX: WRUSAHBC"
+                className="w-full rounded-md border border-border bg-card/60 px-3 py-2 font-mono text-base tracking-widest outline-none focus:border-primary"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Esse código fica salvo e libera novos atletas a entrarem no app. Códigos antigos continuam valendo.
+              </p>
+            </div>
             <div className="flex items-start gap-2 rounded-md bg-secondary/40 p-3 text-xs text-muted-foreground">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               Se já existe um mês com esse ano/mês, ele será sobrescrito. Os prêmios do ano são recalculados.
@@ -177,8 +194,8 @@ function ImportPage() {
             <Button
               size="lg"
               className="w-full gap-2"
-              disabled={mutation.isPending}
-              onClick={() => mutation.mutate(payload!)}
+              disabled={mutation.isPending || inviteCode.length < 4}
+              onClick={() => mutation.mutate({ p: payload!, code: inviteCode })}
             >
               <CheckCircle2 className="h-4 w-4" />
               {mutation.isPending ? "Salvando..." : "Salvar mês"}
