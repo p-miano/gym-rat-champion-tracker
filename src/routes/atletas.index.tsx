@@ -25,7 +25,7 @@ function AthletesIndex() {
           {athletes.map((a) => (
             <Link key={a.id} to="/atletas/$id" params={{ id: a.id }}>
               <div className="flex items-center gap-3 rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-card">
-                <Avatar src={a.profile_picture_url} name={a.full_name} size={48} />
+                <Avatar src={a.profile_picture_url} name={a.full_name} size={48} shape="rounded" />
                 <div className="display text-lg">{a.full_name}</div>
               </div>
             </Link>
