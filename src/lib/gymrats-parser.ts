@@ -507,6 +507,20 @@ export function spHour(isoTimestamp: string): number {
   return Number(hour);
 }
 
+/** Local minutes since midnight (0-1439) in São Paulo timezone. */
+export function spMinutesOfDay(isoTimestamp: string): number {
+  const d = new Date(isoTimestamp);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  return h * 60 + m;
+}
+
 /** ISO week key (YYYY-Www) in São Paulo timezone (approx using UTC day). */
 export function spWeekKey(isoTimestamp: string): string {
   const key = spDateKey(isoTimestamp);

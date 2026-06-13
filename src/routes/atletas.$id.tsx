@@ -27,6 +27,7 @@ import {
   classifyCheckInExclusive,
   isOutdoor,
   extractPlatformActivities,
+  spMinutesOfDay,
 } from "@/lib/gymrats-parser";
 import { useReverseGeocode } from "@/lib/use-reverse-geocode";
 import { haversineKm } from "@/lib/awards";
@@ -223,6 +224,58 @@ function AthleteDetail() {
     };
   }, [yearCheckIns]);
 
+  // ─── Total de reações recebidas (auditoria de engajamento) ──────────────
+  const totalReactions = useMemo(() => {
+    let n = 0;
+    for (const c of yearCheckIns) n += (c.reactions ?? []).length;
+    return n;
+  }, [yearCheckIns]);
+
+  // ─── Perfil de horário dinâmico ─────────────────────────────────────────
+  const timeProfile = useMemo(() => {
+    const buckets: Array<{
+      key: string;
+      label: string;
+      emoji: string;
+      match: (m: number) => boolean;
+    }> = [
+      { key: "psicopata", label: "Psicopata das 5h", emoji: "⏰", match: (m) => m >= 5 * 60 && m < 8 * 60 },
+      {
+        key: "herdeiro",
+        label: "Herdeiro",
+        emoji: "👑",
+        match: (m) => (m >= 8 * 60 && m <= 11 * 60 + 29) || (m >= 13 * 60 + 31 && m < 18 * 60),
+      },
+      { key: "clt", label: "CLT que bate cartão", emoji: "💼", match: (m) => m >= 11 * 60 + 30 && m <= 13 * 60 + 30 },
+      { key: "revezamento", label: "Mestre do Revezamento", emoji: "👥", match: (m) => m >= 18 * 60 && m <= 20 * 60 + 29 },
+      { key: "vampiro", label: "Vampiro Noturno", emoji: "🦇", match: (m) => m >= 20 * 60 + 30 && m <= 23 * 60 + 59 },
+    ];
+    const counts = new Map<string, number>();
+    let total = 0;
+    for (const c of yearCheckIns) {
+      const m = spMinutesOfDay(c.occurred_at);
+      for (const b of buckets) {
+        if (b.match(m)) {
+          counts.set(b.key, (counts.get(b.key) ?? 0) + 1);
+          total++;
+          break;
+        }
+      }
+    }
+    if (total === 0) return null;
+    let best = buckets[0];
+    let bestN = -1;
+    for (const b of buckets) {
+      const n = counts.get(b.key) ?? 0;
+      if (n > bestN) {
+        best = b;
+        bestN = n;
+      }
+    }
+    return { label: best.label, emoji: best.emoji, count: bestN, total, pct: Math.round((bestN / total) * 100) };
+  }, [yearCheckIns]);
+
+
 
 
   // ─── Inteligência geográfica: QG / cidade base ──────────────────────────
@@ -298,7 +351,20 @@ function AthleteDetail() {
           <Avatar src={athlete.profile_picture_url} name={athlete.full_name} size={88} />
           <div className="flex-1 min-w-0">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Prontuário {year}</div>
-            <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+              {timeProfile && (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-primary/50 bg-primary/10 px-3 py-1 text-sm text-primary"
+                  title={`${timeProfile.count} de ${timeProfile.total} check-ins (${timeProfile.pct}%) nessa faixa de horário`}
+                >
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Perfil</span>
+                  <span className="font-semibold">{timeProfile.label}</span>
+                  <span>{timeProfile.emoji}</span>
+                </Badge>
+              )}
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {monthsWon > 0 && (
                 <Badge className="gap-1"><Trophy className="h-3 w-3" />{monthsWon}x campeão</Badge>
@@ -317,13 +383,14 @@ function AthleteDetail() {
               })}
             </div>
           </div>
+
         </div>
       </div>
 
       {/* ─── Performance: meta semanal ─── */}
       <section>
         <SectionTitle icon={<Activity className="h-4 w-4" />} text="Performance · Meta 3x por semana" />
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <BigStat
             label="Dias Ativos Totais"
             value={audit.activeDays}
@@ -343,8 +410,16 @@ function AthleteDetail() {
             tone={weekly.debt > 0 ? "danger" : "muted"}
             icon={<CalendarX className="h-5 w-5" />}
           />
+          <BigStat
+            label="Reações Recebidas"
+            value={totalReactions}
+            sub="auditoria do Topa tudo por biscoito 📣"
+            tone={totalReactions > 0 ? "lime" : "muted"}
+            icon={<Heart className="h-5 w-5" />}
+          />
         </div>
       </section>
+
 
       {/* ─── Localização ─── */}
       <section>

@@ -49,11 +49,6 @@ const POOL: Record<string, string[]> = {
     "Ressurgiu das cinzas (e do sofá).",
     "Fênix? Mais pra Fênix da Garoa, mas valeu o retorno.",
   ],
-  early_bird: [
-    "Treina antes do galo cantar. Tem alguma coisa errada com você.",
-    "Psicopata das 5h da manhã. Por favor, durma.",
-    "Acorda cedo só pra esfregar na cara dos outros.",
-  ],
   night_owl: [
     "Fecha a academia. Os funcionários já te chamam pelo nome.",
     "Corujão. Treino é só desculpa pra não dormir.",
@@ -119,11 +114,6 @@ export const AWARD_META: Record<
     title: "A Fênix",
     short: "Voltou de um hiato e engatou a meta.",
   },
-  early_bird: {
-    emoji: "🌅",
-    title: "Psicopata das 5h",
-    short: "Mais treinos antes das 7h.",
-  },
   night_owl: {
     emoji: "🦉",
     title: "Corujão",
@@ -142,7 +132,7 @@ export const DETAIL_LABELS: Record<string, { singular: string; plural: string }>
   laughs: { singular: "risada", plural: "risadas" },
   total_km: { singular: "km", plural: "km" },
   comebacks: { singular: "ressurreição", plural: "ressurreições" },
-  early_checkins: { singular: "treino antes das 7h", plural: "treinos antes das 7h" },
+  
   late_checkins: { singular: "treino depois das 22h", plural: "treinos depois das 22h" },
 };
 

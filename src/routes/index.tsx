@@ -125,7 +125,7 @@ function HomePage() {
               {(standing.awards ?? [])
                 .slice()
                 .sort((a: any, b: any) => {
-                  const order = ["bodybuilding_beast","cardio_king","rust_enemy","mile_eater","nature_lover","no_borders","influencer","wod_comedian","early_bird"];
+                  const order = ["bodybuilding_beast","cardio_king","rust_enemy","mile_eater","nature_lover","no_borders","influencer","wod_comedian"];
                   const ai = order.indexOf(a.award_key);
                   const bi = order.indexOf(b.award_key);
                   return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
