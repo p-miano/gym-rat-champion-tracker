@@ -34,12 +34,14 @@ function ImportPage() {
   });
 
   const [payload, setPayload] = useState<GymRatsExport | null>(null);
+  const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const importCall = useServerFn(importMonth);
   const mutation = useMutation({
-    mutationFn: (p: GymRatsExport) => importCall({ data: { payload: p } }),
+    mutationFn: (vars: { p: GymRatsExport; code: string }) =>
+      importCall({ data: { payload: vars.p, invite_code: vars.code } }),
     onSuccess: (res) => {
       toast.success(`Mês importado! ${res.check_ins} treinos (${res.invalid} flagrados).`);
       router.invalidate();
@@ -47,6 +49,7 @@ function ImportPage() {
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao importar"),
   });
+
 
   const recomputeCall = useServerFn(recomputeAwards);
   const recomputeMutation = useMutation({
