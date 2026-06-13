@@ -21,6 +21,7 @@ import {
 
 import { getAthlete } from "@/lib/data.functions";
 import { Avatar } from "./index";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
 import { AWARD_META, jokeFor } from "@/lib/jokes";
 import {
   spDateKey,

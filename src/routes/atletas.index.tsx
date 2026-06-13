@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { listAthletes } from "@/lib/data.functions";
 import { Avatar } from "./index";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
 
 const opts = () => queryOptions({ queryKey: ["athletes"], queryFn: () => listAthletes() });
 
