@@ -2,12 +2,12 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
-import { Upload, FileJson, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, FileJson, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { importMonth } from "@/lib/import.functions";
+import { importMonth, recomputeAwards } from "@/lib/import.functions";
 import { isCurrentUserAdmin } from "@/lib/data.functions";
 import { parseExport, type GymRatsExport } from "@/lib/gymrats-parser";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,16 @@ function ImportPage() {
       router.navigate({ to: "/meses/$id", params: { id: res.month_id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao importar"),
+  });
+
+  const recomputeCall = useServerFn(recomputeAwards);
+  const recomputeMutation = useMutation({
+    mutationFn: () => recomputeCall({ data: { year: new Date().getFullYear() } }),
+    onSuccess: (res) => {
+      toast.success(`Conquistas de ${res.year} recalculadas.`);
+      router.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao recalcular"),
   });
 
   async function handleFile(file: File) {
@@ -94,6 +104,27 @@ function ImportPage() {
         <h1 className="display text-4xl text-lime">Importar JSON do Gym Rats</h1>
         <p className="text-muted-foreground">Arrasta o arquivo do mês ou clica pra escolher.</p>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="display text-lg">Recalcular conquistas do ano</div>
+            <p className="text-xs text-muted-foreground">
+              Roda o cálculo de prêmios anuais sobre os check-ins já importados, sem reimportar JSON.
+              Use depois de mudanças na lógica de classificação.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            className="gap-2"
+            disabled={recomputeMutation.isPending}
+            onClick={() => recomputeMutation.mutate()}
+          >
+            <RefreshCw className={`h-4 w-4 ${recomputeMutation.isPending ? "animate-spin" : ""}`} />
+            {recomputeMutation.isPending ? "Recalculando..." : `Recalcular ${new Date().getFullYear()}`}
+          </Button>
+        </CardContent>
+      </Card>
 
       <div
         onDragOver={(e) => e.preventDefault()}
