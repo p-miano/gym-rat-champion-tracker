@@ -63,7 +63,13 @@ function rankingFromCheckIns(
 
 export const importMonth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { payload: GymRatsExport }) => data)
+  .inputValidator((data: { payload: GymRatsExport; invite_code: string }) => {
+    const code = String(data.invite_code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length < 4 || code.length > 32) {
+      throw new Error("Código do convite inválido (4–32 caracteres alfanuméricos).");
+    }
+    return { payload: data.payload, invite_code: code };
+  })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -87,7 +93,7 @@ export const importMonth = createServerFn({ method: "POST" })
       .single();
     if (monthErr || !monthRow) throw new Error(monthErr?.message ?? "Falha ao salvar mês");
 
-    // Register the GymRats group so onboarding can validate codes against it
+    // Register the GymRats group + invite code so onboarding can validate codes against it
     if (parsed.source_id) {
       await supabaseAdmin
         .from("valid_groups")
@@ -95,7 +101,19 @@ export const importMonth = createServerFn({ method: "POST" })
           { gymrats_group_id: parsed.source_id, name: parsed.name },
           { onConflict: "gymrats_group_id" },
         );
+      await supabaseAdmin
+        .from("valid_group_codes")
+        .upsert(
+          {
+            code: data.invite_code,
+            gymrats_group_id: parsed.source_id,
+            label: parsed.name,
+            added_by: context.userId,
+          },
+          { onConflict: "code" },
+        );
     }
+
 
     // Upsert athletes
     const athleteRows = parsed.members.map((m) => ({
