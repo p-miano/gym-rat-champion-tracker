@@ -43,8 +43,7 @@ function OnboardingPage() {
   const [validating, setValidating] = useState(false);
 
   const [athleteId, setAthleteId] = useState<string>("");
-  const [displayMode, setDisplayMode] = useState<"placeholder" | "nickname" | "real">("placeholder");
-  const [nickname, setNickname] = useState("");
+  const [displayMode, setDisplayMode] = useState<"placeholder" | "real">("placeholder");
   const [showPhoto, setShowPhoto] = useState<"yes" | "no">("no");
   const [submitting, setSubmitting] = useState(false);
 
