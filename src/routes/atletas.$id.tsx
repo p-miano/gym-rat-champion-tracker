@@ -28,6 +28,7 @@ import {
   isOutdoor,
   extractPlatformActivities,
 } from "@/lib/gymrats-parser";
+import { useReverseGeocode } from "@/lib/use-reverse-geocode";
 
 const MONTH_NAMES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const COLORS = ["#b6ff1a", "#8bd926", "#5ec05f", "#f0b800", "#e26161", "#7e6cd9"];
@@ -356,24 +357,7 @@ function AthleteDetail() {
       <section>
         <SectionTitle icon={<MapPin className="h-4 w-4" />} text="Inteligência Geográfica" />
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card/60 p-5">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">QG · Cidade Base</div>
-            {geo.baseCity ? (
-              <>
-                <div className="mt-1 display text-3xl text-lime truncate">{geo.baseCity}</div>
-                <div className="text-sm text-muted-foreground">{geo.baseCount} check-ins na base</div>
-              </>
-            ) : geo.baseLat !== null ? (
-              <>
-                <div className="mt-1 display text-2xl text-lime">
-                  {geo.baseLat?.toFixed(3)}, {geo.baseLng?.toFixed(3)}
-                </div>
-                <div className="text-sm text-muted-foreground">cluster geográfico (sem cidade definida)</div>
-              </>
-            ) : (
-              <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
-            )}
-          </div>
+          <GeoBaseCard geo={geo} />
           <div className="rounded-xl border border-border bg-card/60 p-5">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
               <Plane className="h-3.5 w-3.5" /> Treinos Fora da Base
@@ -389,6 +373,7 @@ function AthleteDetail() {
           </div>
         </div>
       </section>
+
 
       {/* ─── DNA Maromba ─── */}
       <section>
@@ -667,3 +652,49 @@ function AuditRow({
     </div>
   );
 }
+
+function GeoBaseCard({
+  geo,
+}: {
+  geo: {
+    baseCity: string | null;
+    baseCount: number;
+    baseLat: number | null;
+    baseLng: number | null;
+    hasAnyGeo: boolean;
+  };
+}) {
+  const hasCluster = geo.baseCity == null && geo.baseLat != null && geo.baseLng != null;
+  const { data, isLoading } = useReverseGeocode(
+    hasCluster ? geo.baseLat : null,
+    hasCluster ? geo.baseLng : null,
+  );
+
+  return (
+    <div className="rounded-xl border border-border bg-card/60 p-5">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">QG · Cidade Base</div>
+      {geo.baseCity ? (
+        <>
+          <div className="mt-1 display text-3xl text-lime truncate">{geo.baseCity}</div>
+          <div className="text-sm text-muted-foreground">{geo.baseCount} check-ins na base</div>
+        </>
+      ) : hasCluster ? (
+        <>
+          {isLoading ? (
+            <div className="mt-1 h-8 w-40 animate-pulse rounded bg-muted/60" />
+          ) : (
+            <div className="mt-1 display text-3xl text-lime truncate">
+              {data?.display ?? `${geo.baseLat!.toFixed(3)}, ${geo.baseLng!.toFixed(3)}`}
+            </div>
+          )}
+          <div className="text-sm text-muted-foreground">
+            QG · cluster geográfico ({geo.baseLat!.toFixed(3)}, {geo.baseLng!.toFixed(3)})
+          </div>
+        </>
+      ) : (
+        <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
+      )}
+    </div>
+  );
+}
+
