@@ -122,7 +122,16 @@ function HomePage() {
             <Empty>Ainda sem categorias decididas.</Empty>
           ) : (
             <div className="grid gap-3">
-              {(standing.awards ?? []).map((a: any) => {
+              {(standing.awards ?? [])
+                .slice()
+                .sort((a: any, b: any) => {
+                  const order = ["bodybuilding_beast","cardio_king","rust_enemy","mile_eater","nature_lover","no_borders","influencer","wod_comedian","early_bird"];
+                  const ai = order.indexOf(a.award_key);
+                  const bi = order.indexOf(b.award_key);
+                  return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+                })
+                .filter((a: any) => a.award_key !== "night_owl")
+                .map((a: any) => {
                 const meta = AWARD_META[a.award_key];
                 if (!meta) return null;
                 const detailText = (() => {
