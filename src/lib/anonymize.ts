@@ -7,31 +7,38 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const PLACEHOLDER_NAMES = [
-  "Maria Silva",
-  "João Santos",
-  "Pedro Oliveira",
-  "Ana Souza",
-  "Lucas Pereira",
-  "Mariana Costa",
-  "Bruno Almeida",
-  "Carla Lima",
-  "Rafael Rodrigues",
-  "Juliana Ferreira",
-  "Gustavo Carvalho",
-  "Beatriz Ribeiro",
-  "Thiago Gomes",
-  "Camila Martins",
-  "Felipe Araújo",
-  "Larissa Barbosa",
-  "Eduardo Cardoso",
-  "Patrícia Mendes",
-  "Rodrigo Teixeira",
-  "Vanessa Moreira",
-  "Marcelo Rocha",
-  "Fernanda Dias",
-  "Diego Nascimento",
-  "Tatiana Castro",
+  "Lucas",
+  "Maria",
+  "Gabriel",
+  "Ana",
+  "Matheus",
+  "Julia",
+  "Felipe",
+  "Yasmin",
+  "Guilherme",
+  "Vitória",
+  "Rafael",
+  "Larissa",
+  "Daniel",
+  "Bruna",
+  "Gustavo",
+  "Camila",
+  "Pedro",
+  "Letícia",
+  "João",
+  "Jéssica",
+  "Thiago",
+  "Carolina",
+  "Leonardo",
+  "Mariana",
+  "Bruno",
+  "Amanda",
+  "Vinícius",
+  "Beatriz",
+  "Rodrigo",
+  "Isabela",
 ];
+
 
 // Lightweight color palette for initials avatars (HSL hues stable per id).
 function hashStr(s: string) {
@@ -74,13 +81,14 @@ export function displayAthlete(athlete: AthleteLike, isAuthed: boolean): Display
   const realPhoto = athlete?.profile_picture_url ?? null;
 
   if (isAuthed) {
-    // Members see real names/photos unless the athlete opted into nickname/placeholder
+    // Members always see the official GymRats photo (override Google avatar)
     const mode = athlete?.display_mode ?? "placeholder";
     if (mode === "nickname" && athlete?.public_nickname) {
       return { name: athlete.public_nickname, photoUrl: realPhoto, forceInitials: false };
     }
     return { name: realName, photoUrl: realPhoto, forceInitials: false };
   }
+
 
   // Public visitor: honor athlete's preferences
   const mode = athlete?.display_mode ?? "placeholder";

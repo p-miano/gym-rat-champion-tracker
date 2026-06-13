@@ -6,6 +6,8 @@ import { Trophy, Skull, AlertTriangle, Camera, Clock, MapPin } from "lucide-reac
 import { getMonth } from "@/lib/data.functions";
 import { Avatar } from "./index";
 import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
+import { useIsAuthed } from "@/lib/anonymize";
+
 
 const MONTH_NAMES = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -120,15 +122,19 @@ function MonthDetail() {
 }
 
 function CheckInCard({ c }: { c: any }) {
+  const authed = useIsAuthed();
   return (
     <div className={`overflow-hidden rounded-lg border ${c.is_valid ? "border-border" : "border-destructive/40"} bg-card/50`}>
-      {c.photo_url ? (
-        <img src={c.photo_url} alt={c.title ?? ""} className="aspect-video w-full object-cover" loading="lazy" />
-      ) : (
-        <div className="flex aspect-video items-center justify-center bg-destructive/10 text-destructive">
-          <Camera className="h-8 w-8" />
-        </div>
+      {authed && (
+        c.photo_url ? (
+          <img src={c.photo_url} alt={c.title ?? ""} className="aspect-video w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="flex aspect-video items-center justify-center bg-destructive/10 text-destructive">
+            <Camera className="h-8 w-8" />
+          </div>
+        )
       )}
+
       <div className="p-3">
         <div className="text-xs text-muted-foreground">
           {new Date(c.occurred_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
