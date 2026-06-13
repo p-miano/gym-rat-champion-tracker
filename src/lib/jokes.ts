@@ -132,7 +132,7 @@ export const DETAIL_LABELS: Record<string, { singular: string; plural: string }>
   laughs: { singular: "risada", plural: "risadas" },
   total_km: { singular: "km", plural: "km" },
   comebacks: { singular: "ressurreição", plural: "ressurreições" },
-  early_checkins: { singular: "treino antes das 7h", plural: "treinos antes das 7h" },
+  
   late_checkins: { singular: "treino depois das 22h", plural: "treinos depois das 22h" },
 };
 
