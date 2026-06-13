@@ -654,12 +654,10 @@ function GeoBaseCard({
             <div className="mt-1 h-8 w-40 animate-pulse rounded bg-muted/60" />
           ) : (
             <div className="mt-1 display text-3xl text-lime truncate">
-              {data?.display ?? `${geo.baseLat!.toFixed(3)}, ${geo.baseLng!.toFixed(3)}`}
+              {data?.display ?? "Localização aproximada"}
             </div>
           )}
-          <div className="text-sm text-muted-foreground">
-            QG · cluster geográfico ({geo.baseLat!.toFixed(3)}, {geo.baseLng!.toFixed(3)})
-          </div>
+          <div className="text-sm text-muted-foreground">QG · cluster geográfico</div>
         </>
       ) : (
         <div className="mt-1 text-sm text-muted-foreground">Sem geolocalização cadastrada.</div>
