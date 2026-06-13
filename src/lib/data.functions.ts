@@ -234,8 +234,9 @@ export const getAthlete = createServerFn({ method: "GET" })
     ]);
     if (!athlete) throw new Error("Atleta não encontrado");
     const authed = await isCallerAuthenticated();
+    const { claimed_by_user_id, ...athletePublic } = athlete as any;
     return {
-      athlete,
+      athlete: authed ? athlete : athletePublic,
       check_ins: scrubCheckIns(checkIns ?? [], authed),
       month_results: monthResults ?? [],
       awards: awards ?? [],
