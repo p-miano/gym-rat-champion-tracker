@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, Coins, CalendarDays, Flame, Award } from "lucide-react";
 import { getAnnualStanding, listMonths } from "@/lib/data.functions";
 import { AWARD_META, formatDetail } from "@/lib/jokes";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
+import { useIsAuthed, displayAthlete } from "@/lib/anonymize";
 
 const YEAR = new Date().getFullYear();
 const SEASON_LABEL = "2026 / 2027";
@@ -35,6 +37,7 @@ const monthsOpts = () =>
 function HomePage() {
   const { data: standing } = useSuspenseQuery(standingOpts());
   const { data: months } = useSuspenseQuery(monthsOpts());
+  const authed = useIsAuthed();
 
   // Group winners by win count → ties share a card
   const podiumGroups: { wins: number; athletes: any[] }[] = [];
@@ -103,8 +106,8 @@ function HomePage() {
                       <td className="px-3 py-2 font-condensed text-lg text-lime">{i + 1}</td>
                       <td className="px-3 py-2">
                         <Link to="/atletas/$id" params={{ id: row.athlete_id }} className="flex items-center gap-3 hover:underline">
-                          <Avatar src={row.athlete?.profile_picture_url} name={row.athlete?.full_name} size={32} />
-                          <span className="font-medium">{row.athlete?.full_name}</span>
+                          <AthleteAvatar athlete={row.athlete} size={32} />
+                          <span className="font-medium"><AthleteName athlete={row.athlete} /></span>
                         </Link>
                       </td>
                       <td className="px-3 py-2 text-right font-condensed text-xl">{row.active_days}</td>
@@ -155,8 +158,8 @@ function HomePage() {
                             params={{ id: a.athlete_id }}
                             className="mt-3 flex items-center gap-2 hover:underline"
                           >
-                            <Avatar src={a.athlete?.profile_picture_url} name={a.athlete?.full_name} size={28} />
-                            <span className="font-medium truncate">{a.athlete?.full_name}</span>
+                            <AthleteAvatar athlete={a.athlete} size={28} />
+                            <span className="font-medium truncate"><AthleteName athlete={a.athlete} /></span>
                             {detailText && (
                               <span className="ml-auto font-condensed text-xs uppercase tracking-wider text-muted-foreground">
                                 {detailText}
@@ -182,8 +185,8 @@ function HomePage() {
             {(standing.lasts ?? []).map((l: any) => (
               <Link key={l.athlete_id} to="/atletas/$id" params={{ id: l.athlete_id }}>
                 <div className="flex items-center gap-3 border-2 border-destructive/60 bg-destructive/10 px-3 py-2 text-sm transition-colors hover:bg-destructive/20">
-                  <Avatar src={l.athlete?.profile_picture_url} name={l.athlete?.full_name} size={28} />
-                  <span className="font-medium">{l.athlete?.full_name}</span>
+                  <AthleteAvatar athlete={l.athlete} size={28} />
+                  <span className="font-medium"><AthleteName athlete={l.athlete} /></span>
                   <Badge variant="destructive" className="ml-1 font-condensed">{l.count}x lanterna</Badge>
                 </div>
               </Link>
@@ -201,7 +204,7 @@ function HomePage() {
                 <div className="display text-2xl">{lastMonth.name}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
                   {lastMonth.winners.length > 0
-                    ? `Campe${lastMonth.winners.length > 1 ? "ões" : "ão"}: ${lastMonth.winners.map((w: any) => w.full_name).join(", ")}`
+                    ? `Campe${lastMonth.winners.length > 1 ? "ões" : "ão"}: ${lastMonth.winners.map((w: any) => displayAthlete(w, authed).name).join(", ")}`
                     : "Sem campeão ainda."}
                 </div>
               </div>
@@ -249,8 +252,8 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
       <div className="mt-4 flex flex-wrap items-end justify-center gap-4">
         {athletes.map((a) => (
           <Link key={a?.id} to="/atletas/$id" params={{ id: a?.id ?? "" }} className="flex flex-col items-center hover:opacity-90">
-            <Avatar src={a?.profile_picture_url} name={a?.full_name} size={56} />
-            <div className="display mt-2 text-lg leading-tight">{a?.full_name}</div>
+            <AthleteAvatar athlete={a} size={56} />
+            <div className="display mt-2 text-lg leading-tight"><AthleteName athlete={a} /></div>
           </Link>
         ))}
       </div>
@@ -261,9 +264,22 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
   );
 }
 
-export function Avatar({ src, name, size = 40, shape = "circle" }: { src?: string | null; name?: string | null; size?: number; shape?: "circle" | "rounded" | "square" }) {
+export function Avatar({
+  src,
+  name,
+  size = 40,
+  shape = "circle",
+  initialsColor,
+}: {
+  src?: string | null;
+  name?: string | null;
+  size?: number;
+  shape?: "circle" | "rounded" | "square";
+  initialsColor?: string;
+}) {
   const initials = (name ?? "?")
     .split(" ")
+    .filter(Boolean)
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
@@ -280,8 +296,13 @@ export function Avatar({ src, name, size = 40, shape = "circle" }: { src?: strin
     />
   ) : (
     <div
-      className={`grid place-items-center border-2 border-border bg-secondary text-secondary-foreground ${radius}`}
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
+      className={`grid place-items-center border-2 border-border font-semibold text-white ${radius}`}
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.4,
+        backgroundColor: initialsColor ?? "hsl(var(--secondary))",
+      }}
     >
       {initials}
     </div>

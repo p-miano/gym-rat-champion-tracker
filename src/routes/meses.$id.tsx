@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, AlertTriangle, Camera, Clock, MapPin } from "lucide-react";
 import { getMonth } from "@/lib/data.functions";
 import { Avatar } from "./index";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
 
 const MONTH_NAMES = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -68,8 +69,8 @@ function MonthDetail() {
                   <td className="px-3 py-2 display text-lg">{r.rank}</td>
                   <td className="px-3 py-2">
                     <Link to="/atletas/$id" params={{ id: r.athlete_id }} className="flex items-center gap-2 hover:underline">
-                      <Avatar src={r.athletes?.profile_picture_url} name={r.athletes?.full_name} size={28} />
-                      {r.athletes?.full_name}
+                      <AthleteAvatar athlete={r.athletes} size={28} />
+                      <AthleteName athlete={r.athletes} />
                     </Link>
                   </td>
                   <td className="px-3 py-2 text-right font-mono display text-lg text-lime">{r.active_days}</td>
@@ -96,8 +97,8 @@ function MonthDetail() {
             <Card key={r.athlete_id}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Avatar src={r.athletes?.profile_picture_url} name={r.athletes?.full_name} size={28} />
-                  {r.athletes?.full_name}
+                  <AthleteAvatar athlete={r.athletes} size={28} />
+                  <AthleteName athlete={r.athletes} />
                   <span className="ml-auto text-xs text-muted-foreground">
                     {list.length} treinos · {list.filter((c: any) => !c.is_valid).length} flagrados
                   </span>

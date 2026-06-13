@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, Medal, Award } from "lucide-react";
 import { listMonths } from "@/lib/data.functions";
-import { Avatar } from "./index";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
 
 const MONTH_NAMES = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -48,7 +48,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.winners.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -57,7 +57,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.seconds.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -66,7 +66,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.thirds.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -75,7 +75,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.lasts.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} variant="destructive" />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} variant="destructive" />
                       ))
                     )}
                   </Row>
@@ -100,11 +100,11 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
     </div>
   );
 }
-function Pill({ src, name, suffix, variant }: { src?: string | null; name: string; suffix?: string; variant?: "destructive" }) {
+function Pill({ athlete, suffix, variant }: { athlete: any; suffix?: string; variant?: "destructive" }) {
   return (
     <div className={`inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs ${variant === "destructive" ? "border-destructive/40 bg-destructive/10" : "border-primary/30 bg-primary/10"}`}>
-      <Avatar src={src} name={name} size={20} />
-      <span className="font-medium">{name}</span>
+      <AthleteAvatar athlete={athlete} size={20} />
+      <span className="font-medium"><AthleteName athlete={athlete} /></span>
       {suffix && <span className="text-muted-foreground">{suffix}</span>}
     </div>
   );

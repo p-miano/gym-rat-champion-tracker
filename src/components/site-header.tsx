@@ -4,6 +4,8 @@ import { Dumbbell, LogIn, LogOut, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
+const ADMIN_EMAIL = "paulamiano@gmail.com";
+
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
 
@@ -17,6 +19,8 @@ export function SiteHeader() {
     await supabase.auth.signOut();
     window.location.href = "/";
   }
+
+  const isAdmin = email?.toLowerCase() === ADMIN_EMAIL;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
@@ -40,11 +44,13 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           {email ? (
             <>
-              <Link to="/importar">
-                <Button size="sm" variant="secondary" className="gap-2">
-                  <Upload className="h-4 w-4" /> Importar
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link to="/importar">
+                  <Button size="sm" variant="secondary" className="gap-2">
+                    <Upload className="h-4 w-4" /> Importar
+                  </Button>
+                </Link>
+              )}
               <Button size="sm" variant="ghost" onClick={signOut} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Sair</span>

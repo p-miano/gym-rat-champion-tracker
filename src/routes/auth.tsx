@@ -1,11 +1,9 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Entrar — Atletas com Dorflex" }] }),
@@ -13,79 +11,59 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function signInGoogle() {
     setLoading(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Bem-vindo de volta, atleta.");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        toast.success("Conta criada. Vamos malhar!");
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin + "/onboarding",
+      });
+      if (result.error) {
+        toast.error("Não foi possível entrar com o Google. Tente novamente.");
+        setLoading(false);
+        return;
       }
-      router.navigate({ to: "/" });
+      if (result.redirected) return;
+      // Tokens received; navigate to onboarding (root gate will redirect if already onboarded)
+      window.location.href = "/onboarding";
     } catch (e: any) {
-      toast.error(e.message ?? "Erro no login");
-    } finally {
+      toast.error(e?.message ?? "Erro no login.");
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-xl space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="display text-3xl text-lime">
-            {mode === "signin" ? "Entrar" : "Criar conta"}
+            Acesso Exclusivo para Atletas do Grupo
           </CardTitle>
           <CardDescription>
-            {mode === "signin" ? "Pra importar dados e administrar." : "O primeiro usuário vira admin automaticamente."}
+            Faça login com a sua conta Google para liberar a visualização dos dados reais.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className="space-y-4">
-            {mode === "signup" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Carregando..." : mode === "signin" ? "Entrar" : "Criar conta"}
-            </Button>
-            <button
-              type="button"
-              className="block w-full text-center text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            >
-              {mode === "signin" ? "Não tem conta? Criar uma" : "Já tem conta? Entrar"}
-            </button>
-          </form>
+        <CardContent className="space-y-5">
+          <div className="space-y-3 rounded-md border border-border bg-card/60 p-4 text-sm leading-relaxed">
+            <p>
+              <span className="font-semibold">🔒 Privacidade em Primeiro Lugar:</span>{" "}
+              Este aplicativo foi desenvolvido como um portfólio público. Por padrão,
+              todos os dados de treino de visitantes anônimos são protegidos por nomes
+              fictícios e avatares com iniciais coloridas.
+            </p>
+            <p>
+              <span className="font-semibold">🔑 Apenas para Membros:</span> A
+              visualização dos dados reais e o vínculo com seu histórico de treinos só
+              são liberados para atletas do grupo ativo. Para concluir o seu cadastro
+              após o login com o Google, você precisará informar o Código do Grupo
+              GymRats do mês vigente.
+            </p>
+          </div>
+
+          <Button onClick={signInGoogle} disabled={loading} className="w-full" size="lg">
+            {loading ? "Redirecionando…" : "Entrar com Google"}
+          </Button>
         </CardContent>
       </Card>
     </div>
