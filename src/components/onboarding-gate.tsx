@@ -17,11 +17,6 @@ export function OnboardingGate() {
       const path = window.location.pathname;
       if (ALLOWED_PATHS.includes(path)) return;
       try {
-        const res = await fetch("/_serverFn/getMyOnboardingState", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }).catch(() => null);
-        // Fallback: query profile via client (RLS allows public read)
         const { data: profile } = await supabase
           .from("profiles")
           .select("onboarded_at")
@@ -31,7 +26,6 @@ export function OnboardingGate() {
         if (!profile?.onboarded_at) {
           router.navigate({ to: "/onboarding" });
         }
-        void res;
       } catch {
         // ignore
       }
