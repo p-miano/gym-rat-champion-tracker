@@ -7,6 +7,7 @@ import {
   spHour,
   spWeekKey,
 } from "./gymrats-parser";
+// spHour kept for night_owl computation below.
 
 function getSubActivities(raw: unknown): Array<{ platform_activity?: string | null; duration_millis?: number | null }> {
   const r = raw as { check_in_activities?: unknown } | null | undefined;
