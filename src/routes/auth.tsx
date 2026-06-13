@@ -16,17 +16,23 @@ function AuthPage() {
   async function signInGoogle() {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/onboarding",
-      });
+      const result = await Promise.race([
+        lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            reject(new Error("O redirecionamento para o Google demorou mais que o esperado."));
+          }, 15000);
+        }),
+      ]);
       if (result.error) {
         toast.error("Não foi possível entrar com o Google. Tente novamente.");
         setLoading(false);
         return;
       }
       if (result.redirected) return;
-      // Tokens received; navigate to onboarding (root gate will redirect if already onboarded)
-      window.location.href = "/onboarding";
+      window.location.href = "/";
     } catch (e: any) {
       toast.error(e?.message ?? "Erro no login.");
       setLoading(false);
