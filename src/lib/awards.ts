@@ -106,25 +106,38 @@ export function computeAwards(checkIns: AwardCheckIn[]): AwardResult[] {
   const add = (key: string, aid: string | null, details: Record<string, unknown>) =>
     results.push({ award_key: key, athlete_id: aid, details });
 
-  // 1. voucher_limit: nº de semanas com EXATAMENTE 3 dias ativos
+  // 1. rust_enemy: nº de treinos classificados como mobilidade (Pilates, Yoga, alongamento, mobilidade)
   {
     const score = new Map<string, number>();
     for (const [aid, list] of byAthlete) {
-      const weekDays = new Map<string, Set<string>>();
-      for (const c of list) {
-        if (!c.is_valid) continue;
-        const wk = spWeekKey(c.occurred_at);
-        const day = spDateKey(c.occurred_at);
-        if (!weekDays.has(wk)) weekDays.set(wk, new Set());
-        weekDays.get(wk)!.add(day);
-      }
       let n = 0;
-      for (const s of weekDays.values()) if (s.size === 3) n++;
+      for (const c of list) {
+        const cat = classifyCheckInExclusive({
+          activity_type: c.activity_type,
+          title: c.title,
+          description: c.description,
+          check_in_activities: getSubActivities(c.raw),
+        });
+        if (cat === "mobility") n++;
+      }
       score.set(aid, n);
     }
     const winner = topByScore(score, activeDaysTotal);
-    add("voucher_limit", winner, { weeks_at_three: winner ? score.get(winner) : 0 });
+    add("rust_enemy", winner, { mobility_checkins: winner ? score.get(winner) : 0 });
   }
+
+  // 1b. influencer: total de reações recebidas em todos os check-ins
+  {
+    const score = new Map<string, number>();
+    for (const [aid, list] of byAthlete) {
+      let n = 0;
+      for (const c of list) n += (c.reactions ?? []).length;
+      score.set(aid, n);
+    }
+    const winner = topByScore(score, activeDaysTotal);
+    add("influencer", winner, { total_reactions: winner ? score.get(winner) : 0 });
+  }
+
 
   // 2 & 3. bodybuilding_beast × cardio_king (classificação exclusiva por check-in)
   {

@@ -1,11 +1,17 @@
 // Pool de zoeira ácida em PT-BR. Usado para microcopy e legendas dos prêmios.
 
 const POOL: Record<string, string[]> = {
-  voucher_limit: [
-    "Treinou 3x na semana e nem um burpee a mais. Engenheiro de voucher.",
-    "Cumpre a meta com a precisão de um boleto vencendo na sexta.",
-    "Calcula 3 treinos por semana como quem racha conta no aniversário.",
+  rust_enemy: [
+    "Mobilidade em dia. Articulação de bebê, ego de senhor.",
+    "Yoga, pilates, alongamento — inimigo declarado da ferrugem.",
+    "Range de movimento maior que paciência de zelador de academia.",
   ],
+  influencer: [
+    "Cada check-in vira novela. O grupo curte, comenta e ri.",
+    "Engajamento alto. Falta só vender curso de emagrecimento.",
+    "Não treina, performa. Reações chovem igual notificação de boleto.",
+  ],
+
   bodybuilding_beast: [
     "Cheira a anilha e suor. Não cumprimenta sem fazer rosca.",
     "Marombeiro raiz. Espelho da academia já tem foto sua emoldurada.",
@@ -66,11 +72,17 @@ export const AWARD_META: Record<
   string,
   { emoji: string; title: string; short: string }
 > = {
-  voucher_limit: {
-    emoji: "⚖️",
-    title: "No Limite do Voucher",
-    short: "Cumpre a meta cirurgicamente, nem um treino a mais.",
+  rust_enemy: {
+    emoji: "🧘",
+    title: "Inimigo da Ferrugem",
+    short: "Mais treinos de mobilidade (pilates, yoga, alongamento) no ano.",
   },
+  influencer: {
+    emoji: "📣",
+    title: "Influencer",
+    short: "Mais reações recebidas nos check-ins.",
+  },
+
   bodybuilding_beast: {
     emoji: "💪",
     title: "Marombeiro",
@@ -120,7 +132,8 @@ export const AWARD_META: Record<
 
 // Rótulos PT-BR para as chaves de `details` salvas em annual_awards.
 export const DETAIL_LABELS: Record<string, { singular: string; plural: string }> = {
-  weeks_at_three: { singular: "semana no limite", plural: "semanas no limite" },
+  mobility_checkins: { singular: "treino de mobilidade", plural: "treinos de mobilidade" },
+  total_reactions: { singular: "reação", plural: "reações" },
   strength_checkins: { singular: "treino de força", plural: "treinos de força" },
   cardio_checkins: { singular: "treino de cardio", plural: "treinos de cardio" },
   outdoor_checkins: { singular: "treino ao ar livre", plural: "treinos ao ar livre" },
