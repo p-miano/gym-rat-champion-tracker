@@ -12,7 +12,7 @@ export const listMonths = createServerFn({ method: "GET" }).handler(async () => 
 
   const { data: results } = await supabaseAdmin
     .from("month_results")
-    .select("month_id, athlete_id, active_days, rank, is_winner, is_last, athletes(full_name, profile_picture_url)");
+    .select("month_id, athlete_id, active_days, rank, is_winner, is_last, athletes(id, full_name, profile_picture_url, display_mode, public_nickname, show_google_photo, google_photo_url)");
 
   const byMonth = new Map<string, any[]>();
   for (const r of results ?? []) {
@@ -67,7 +67,7 @@ export const getMonth = createServerFn({ method: "GET" })
       supabaseAdmin.from("months").select("*").eq("id", data.id).single(),
       supabaseAdmin
         .from("month_results")
-        .select("*, athletes(id, full_name, profile_picture_url)")
+        .select("*, athletes(id, full_name, profile_picture_url, display_mode, public_nickname, show_google_photo, google_photo_url)")
         .eq("month_id", data.id)
         .order("rank"),
       supabaseAdmin
@@ -111,11 +111,11 @@ export const getAnnualStanding = createServerFn({ method: "GET" })
     const [{ data: results }, { data: awardsRaw }] = await Promise.all([
       supabaseAdmin
         .from("month_results")
-        .select("month_id, athlete_id, is_winner, is_last, active_days, athletes(id, full_name, profile_picture_url)")
+        .select("month_id, athlete_id, is_winner, is_last, active_days, athletes(id, full_name, profile_picture_url, display_mode, public_nickname, show_google_photo, google_photo_url)")
         .in("month_id", monthIds),
       supabaseAdmin
         .from("annual_awards")
-        .select("award_key, athlete_id, details, athletes(id, full_name, profile_picture_url)")
+        .select("award_key, athlete_id, details, athletes(id, full_name, profile_picture_url, display_mode, public_nickname, show_google_photo, google_photo_url)")
         .eq("year", data.year),
     ]);
 
