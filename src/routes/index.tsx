@@ -261,9 +261,22 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
   );
 }
 
-export function Avatar({ src, name, size = 40, shape = "circle" }: { src?: string | null; name?: string | null; size?: number; shape?: "circle" | "rounded" | "square" }) {
+export function Avatar({
+  src,
+  name,
+  size = 40,
+  shape = "circle",
+  initialsColor,
+}: {
+  src?: string | null;
+  name?: string | null;
+  size?: number;
+  shape?: "circle" | "rounded" | "square";
+  initialsColor?: string;
+}) {
   const initials = (name ?? "?")
     .split(" ")
+    .filter(Boolean)
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
@@ -280,8 +293,13 @@ export function Avatar({ src, name, size = 40, shape = "circle" }: { src?: strin
     />
   ) : (
     <div
-      className={`grid place-items-center border-2 border-border bg-secondary text-secondary-foreground ${radius}`}
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
+      className={`grid place-items-center border-2 border-border font-semibold text-white ${radius}`}
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.4,
+        backgroundColor: initialsColor ?? "hsl(var(--secondary))",
+      }}
     >
       {initials}
     </div>
