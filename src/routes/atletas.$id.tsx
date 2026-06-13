@@ -27,6 +27,7 @@ import {
   classifyCheckInExclusive,
   isOutdoor,
   extractPlatformActivities,
+  spMinutesOfDay,
 } from "@/lib/gymrats-parser";
 import { useReverseGeocode } from "@/lib/use-reverse-geocode";
 import { haversineKm } from "@/lib/awards";
