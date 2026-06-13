@@ -37,6 +37,7 @@ const monthsOpts = () =>
 function HomePage() {
   const { data: standing } = useSuspenseQuery(standingOpts());
   const { data: months } = useSuspenseQuery(monthsOpts());
+  const authed = useIsAuthed();
 
   // Group winners by win count → ties share a card
   const podiumGroups: { wins: number; athletes: any[] }[] = [];
