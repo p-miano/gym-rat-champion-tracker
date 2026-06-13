@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, Medal, Award } from "lucide-react";
 import { listMonths } from "@/lib/data.functions";
-import { Avatar } from "./index";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
 
 const MONTH_NAMES = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -48,7 +48,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.winners.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -57,7 +57,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.seconds.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -66,7 +66,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.thirds.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} />
                       ))
                     )}
                   </Row>
@@ -75,7 +75,7 @@ function MonthsPage() {
                       <span className="text-muted-foreground">—</span>
                     ) : (
                       m.lasts.map((w: any) => (
-                        <Pill key={w.athlete_id} src={w.profile_picture_url} name={w.full_name} suffix={`${w.active_days}d`} variant="destructive" />
+                        <Pill key={w.athlete_id} athlete={w} suffix={`${w.active_days}d`} variant="destructive" />
                       ))
                     )}
                   </Row>
