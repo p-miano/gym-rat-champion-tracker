@@ -33,7 +33,7 @@ export function SiteHeader() {
           </div>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
-          <NavLink to="/">Placar Geral</NavLink>
+          <NavLink to="/">PLACAR</NavLink>
           <NavLink to="/meses">Meses</NavLink>
           <NavLink to="/atletas">Atletas</NavLink>
         </nav>

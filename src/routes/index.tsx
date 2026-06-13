@@ -12,7 +12,7 @@ const SEASON_LABEL = "2026 / 2027";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Placar Geral — Atletas com Dorflex" },
+      { title: "PLACAR — Atletas com Dorflex" },
       { name: "description", content: "Placar geral, bolada acumulada e o Lanterna do Dorflex." },
     ],
   }),
@@ -51,7 +51,7 @@ function HomePage() {
     <div className="space-y-12">
       <section className="grid-bg rounded-none border-2 border-border bg-card/40 p-8 md:p-12">
         <div className="font-condensed text-xs text-primary uppercase">Temporada {SEASON_LABEL}</div>
-        <h1 className="display mt-2 text-6xl md:text-8xl text-lime">Placar Geral</h1>
+        <h1 className="display mt-2 text-6xl md:text-8xl text-lime">PLACAR</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Quem vencer mais meses leva a bolada, se aposenta, faz a viagem dos sonhos e manda
           mensagem no Natal. O resto paga R$10. O lanterna paga R$20 e passa vergonha.
@@ -70,7 +70,7 @@ function HomePage() {
       </section>
 
       <section>
-        <SectionTitle icon={<Trophy className="h-5 w-5" />}>Pódio anual · Campeões</SectionTitle>
+        <SectionTitle icon={<Trophy className="h-5 w-5" />}>PÓDIO · CAMPEÕES</SectionTitle>
         {podiumGroups.length === 0 ? (
           <Empty>Ninguém ganhou nada ainda. Importe um mês pra começar a humilhação.</Empty>
         ) : (
@@ -87,7 +87,7 @@ function HomePage() {
       <div className="grid gap-8 lg:grid-cols-2">
         {(standing.active_days_ranking ?? []).length > 0 && (
           <section>
-            <SectionTitle icon={<Flame className="h-5 w-5" />}>Ranking geral · dias ativos</SectionTitle>
+            <SectionTitle icon={<Flame className="h-5 w-5" />}>RANKING · DIAS ATIVOS</SectionTitle>
             <div className="overflow-hidden border-2 border-border">
               <table className="w-full text-sm">
                 <thead className="bg-secondary/60 font-condensed text-xs uppercase tracking-wider">
@@ -117,7 +117,7 @@ function HomePage() {
         )}
 
         <section>
-          <SectionTitle icon={<Award className="h-5 w-5" />}>Categorias anuais</SectionTitle>
+          <SectionTitle icon={<Award className="h-5 w-5" />}>CONQUISTAS</SectionTitle>
           {(standing.awards ?? []).length === 0 ? (
             <Empty>Ainda sem categorias decididas.</Empty>
           ) : (
