@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const DisplayMode = z.enum(["placeholder", "nickname", "real"]);
+const DisplayMode = z.enum(["placeholder", "real"]);
 
 export const getMyOnboardingState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
