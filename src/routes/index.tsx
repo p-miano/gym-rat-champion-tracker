@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Skull, Coins, CalendarDays, Flame, Award } from "lucide-react";
 import { getAnnualStanding, listMonths } from "@/lib/data.functions";
 import { AWARD_META, formatDetail } from "@/lib/jokes";
+import { AthleteAvatar, AthleteName } from "@/components/athlete-display";
+import { useIsAuthed, displayAthlete } from "@/lib/anonymize";
 
 const YEAR = new Date().getFullYear();
 const SEASON_LABEL = "2026 / 2027";
