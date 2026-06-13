@@ -261,14 +261,14 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
   );
 }
 
-export function Avatar({ src, name, size = 40, rounded = true }: { src?: string | null; name?: string | null; size?: number; rounded?: boolean }) {
+export function Avatar({ src, name, size = 40, shape = "circle" }: { src?: string | null; name?: string | null; size?: number; shape?: "circle" | "rounded" | "square" }) {
   const initials = (name ?? "?")
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const radius = rounded ? "rounded-lg" : "";
+  const radius = shape === "circle" ? "rounded-full" : shape === "rounded" ? "rounded-lg" : "";
   return src ? (
     <img
       src={src}
