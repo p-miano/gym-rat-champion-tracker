@@ -233,9 +233,10 @@ export const getAthlete = createServerFn({ method: "GET" })
       supabaseAdmin.from("check_ins").select("occurred_at").order("occurred_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (!athlete) throw new Error("Atleta não encontrado");
+    const authed = await isCallerAuthenticated();
     return {
       athlete,
-      check_ins: checkIns ?? [],
+      check_ins: scrubCheckIns(checkIns ?? [], authed),
       month_results: monthResults ?? [],
       awards: awards ?? [],
       dataset_max_occurred_at: (maxRow?.occurred_at as string | null) ?? null,
