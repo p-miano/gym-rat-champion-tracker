@@ -83,7 +83,7 @@ export const listMonths = createServerFn({ method: "GET" }).handler(async () => 
       full_name: w.athletes?.full_name,
       profile_picture_url: w.athletes?.profile_picture_url,
       display_mode: w.athletes?.display_mode,
-      public_nickname: w.athletes?.public_nickname,
+      
       show_google_photo: w.athletes?.show_google_photo,
       google_photo_url: w.athletes?.google_photo_url,
       active_days: w.active_days,
