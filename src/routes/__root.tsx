@@ -129,9 +129,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="container mx-auto px-4 py-6 md:py-10">
-      <div className="min-h-screen bg-background text-foreground">
-        <SiteHeader />
         <OnboardingGate />
         <main className="container mx-auto px-4 py-6 md:py-10">
           <Outlet />
