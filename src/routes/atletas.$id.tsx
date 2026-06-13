@@ -224,6 +224,58 @@ function AthleteDetail() {
     };
   }, [yearCheckIns]);
 
+  // ─── Total de reações recebidas (auditoria de engajamento) ──────────────
+  const totalReactions = useMemo(() => {
+    let n = 0;
+    for (const c of yearCheckIns) n += (c.reactions ?? []).length;
+    return n;
+  }, [yearCheckIns]);
+
+  // ─── Perfil de horário dinâmico ─────────────────────────────────────────
+  const timeProfile = useMemo(() => {
+    const buckets: Array<{
+      key: string;
+      label: string;
+      emoji: string;
+      match: (m: number) => boolean;
+    }> = [
+      { key: "psicopata", label: "Psicopata das 5h", emoji: "⏰", match: (m) => m >= 5 * 60 && m < 8 * 60 },
+      {
+        key: "herdeiro",
+        label: "Herdeiro",
+        emoji: "👑",
+        match: (m) => (m >= 8 * 60 && m <= 11 * 60 + 29) || (m >= 13 * 60 + 31 && m < 18 * 60),
+      },
+      { key: "clt", label: "CLT que bate cartão", emoji: "💼", match: (m) => m >= 11 * 60 + 30 && m <= 13 * 60 + 30 },
+      { key: "revezamento", label: "Mestre do Revezamento", emoji: "👥", match: (m) => m >= 18 * 60 && m <= 20 * 60 + 29 },
+      { key: "vampiro", label: "Vampiro Noturno", emoji: "🦇", match: (m) => m >= 20 * 60 + 30 && m <= 23 * 60 + 59 },
+    ];
+    const counts = new Map<string, number>();
+    let total = 0;
+    for (const c of yearCheckIns) {
+      const m = spMinutesOfDay(c.occurred_at);
+      for (const b of buckets) {
+        if (b.match(m)) {
+          counts.set(b.key, (counts.get(b.key) ?? 0) + 1);
+          total++;
+          break;
+        }
+      }
+    }
+    if (total === 0) return null;
+    let best = buckets[0];
+    let bestN = -1;
+    for (const b of buckets) {
+      const n = counts.get(b.key) ?? 0;
+      if (n > bestN) {
+        best = b;
+        bestN = n;
+      }
+    }
+    return { label: best.label, emoji: best.emoji, count: bestN, total, pct: Math.round((bestN / total) * 100) };
+  }, [yearCheckIns]);
+
+
 
 
   // ─── Inteligência geográfica: QG / cidade base ──────────────────────────
