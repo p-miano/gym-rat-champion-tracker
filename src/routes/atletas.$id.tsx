@@ -351,7 +351,20 @@ function AthleteDetail() {
           <Avatar src={athlete.profile_picture_url} name={athlete.full_name} size={88} />
           <div className="flex-1 min-w-0">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Prontuário {year}</div>
-            <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="display text-4xl text-lime truncate">{athlete.full_name}</h1>
+              {timeProfile && (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-primary/50 bg-primary/10 px-3 py-1 text-sm text-primary"
+                  title={`${timeProfile.count} de ${timeProfile.total} check-ins (${timeProfile.pct}%) nessa faixa de horário`}
+                >
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Perfil</span>
+                  <span className="font-semibold">{timeProfile.label}</span>
+                  <span>{timeProfile.emoji}</span>
+                </Badge>
+              )}
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {monthsWon > 0 && (
                 <Badge className="gap-1"><Trophy className="h-3 w-3" />{monthsWon}x campeão</Badge>
@@ -370,6 +383,7 @@ function AthleteDetail() {
               })}
             </div>
           </div>
+
         </div>
       </div>
 
