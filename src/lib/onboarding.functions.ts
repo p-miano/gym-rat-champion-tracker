@@ -10,17 +10,11 @@ export const getMyOnboardingState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile, error } = await supabaseAdmin
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, linked_athlete_id, onboarded_at")
       .eq("id", context.userId)
       .maybeSingle();
-    console.log("[getMyOnboardingState]", {
-      userId: context.userId,
-      hasProfile: !!profile,
-      onboarded_at: profile?.onboarded_at ?? null,
-      error: error?.message ?? null,
-    });
     return {
       userId: context.userId,
       onboarded: !!profile?.onboarded_at,

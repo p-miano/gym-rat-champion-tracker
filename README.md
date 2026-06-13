@@ -244,7 +244,7 @@ bun install
 bun dev
 ```
 
-Acesse `http://localhost:8080`. Banco e auth já vêm provisionados via Lovable Cloud (variáveis em `.env` gerenciadas automaticamente). Para importar dados, faça login com a conta de administrador (o primeiro usuário cadastrado é promovido automaticamente a `admin` por `handle_new_user`; novos admins podem ser concedidos manualmente via `user_roles`) e acesse `/importar`.
+Acesse `http://localhost:8080`. Banco e auth já vêm provisionados via Lovable Cloud (variáveis em `.env` gerenciadas automaticamente). Para importar dados, faça login com a conta admin (`paulamiano@gmail.com` é promovida automaticamente por `handle_new_user`) e use `/importar`.
 
 ---
 

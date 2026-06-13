@@ -1,37 +1,43 @@
-## Problema
+# Mobile Navigation Fix
 
-Paula (`paulamiano@gmail.com`) loga com sucesso pelo Google, mas é levada para `/onboarding` e fica presa lá, mesmo já tendo `onboarded_at` preenchido no banco e estando vinculada a um atleta.
+Add a sticky bottom tab bar for mobile while keeping the existing top navbar for desktop, and tighten the header so it doesn't crowd on small screens.
 
-## Hipóteses
+## 1. New component: `src/components/bottom-nav.tsx`
 
-1. **Race do callback OAuth**: o `redirect_uri` configurado em `src/routes/auth.tsx` é `${origin}/onboarding`. Quando o Google devolve o usuário, `/onboarding` monta e chama imediatamente `getMyOnboardingState`. Se a sessão Supabase ainda não foi persistida no `localStorage`, o `attachSupabaseAuth` não anexa o Bearer e o server fn rejeita com `Unauthorized`. O `catch` da página é silencioso (`// ignore`) e o usuário fica preso no formulário.
-2. **Erro silencioso no server fn** por outro motivo (timeout, env). O `catch {}` esconde qualquer falha de `getMyOnboardingState`.
+A fixed bottom tab bar, mobile-only (`md:hidden`), rendered once at the layout level.
 
-## Correções propostas
+- Container: `fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur md:hidden` with `pb-[env(safe-area-inset-bottom)]`.
+- Grid of equal-width tabs (`grid grid-cols-3`), each a TanStack `<Link>` with `activeProps` highlighting (text-foreground + primary indicator), inactive items use `text-muted-foreground`.
+- Tabs (matching current top nav):
+  - `/` — Trophy icon — "Placar"
+  - `/meses` — Calendar icon — "Meses"
+  - `/atletas` — Users icon — "Atletas"
+- Each tab: vertical stack, 20px icon above 11px label, ~56px tall tap target.
 
-### 1. Expor o erro em vez de engolir
-Em `src/routes/onboarding.tsx` (linhas 58-66), substituir o `catch {}` por: logar o erro no console, mostrar `toast.error` e — se houver sessão válida — assumir o caminho mais seguro (não bloquear o usuário existente).
+Admin-only "Importar" stays in the header (not a primary public route, so it doesn't belong in the bottom bar).
 
-### 2. Esperar a sessão antes de chamar o server fn
-No `useEffect` de `OnboardingPage`, em vez de só `getSession()` uma vez, registrar `onAuthStateChange` e aguardar o evento `SIGNED_IN`/`INITIAL_SESSION` com `access_token` antes de chamar `stateCall()`. Isso elimina a race do callback OAuth.
+## 2. `src/components/site-header.tsx` tweaks
 
-### 3. Fallback baseado em consulta direta ao próprio perfil
-Se o server fn falhar, fazer fallback consultando `supabase.from('profiles').select('onboarded_at').eq('id', user.id).maybeSingle()` direto do client (a RLS permite ao próprio usuário). Se `onboarded_at` existir → `router.navigate({ to: "/" })`.
+- Hide desktop nav links on mobile (already `hidden md:flex` — keep).
+- Shrink the brand block on mobile so it doesn't wrap or clip:
+  - Wrap title row in `min-w-0` containers; add `truncate` on the title.
+  - Reduce title size on mobile: `text-base md:text-lg`.
+  - Hide the "placar · temporada…" subtitle on mobile (`hidden sm:block`) — that's the line that pushes the header wide.
+- Right cluster: keep `Importar` button visible to admin on mobile but use `size="sm"` and hide its text label on very small widths (icon-only via `<span className="hidden xs:inline">Importar</span>` → use `sm:inline`), so admin still sees an upload icon button.
+- Apply the responsive header pattern: outer row `grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-between`, brand link gets `min-w-0`, logo square gets `shrink-0`.
 
-### 4. (Investigação) Adicionar `console.log` no handler de `getMyOnboardingState`
-Logar `userId`, presença de profile e `onboarded_at` no server fn. Após o usuário tentar novamente, ler os logs do worker para confirmar qual hipótese é a verdadeira e ajustar a correção se necessário.
+## 3. `src/routes/__root.tsx` layout wrapper
 
-## Arquivos afetados
+- Import and render `<BottomNav />` inside `RootComponent`, after `<main>`.
+- Add bottom padding to `<main>` on mobile so content isn't hidden behind the bar: `pb-20 md:pb-10`.
 
-- `src/routes/onboarding.tsx` — melhorar o `useEffect`, tirar `catch` silencioso, adicionar fallback.
-- `src/lib/onboarding.functions.ts` — logar diagnóstico temporário no handler `getMyOnboardingState`.
+## Out of scope
 
-Nenhuma migração de banco é necessária — os dados da Paula estão íntegros.
+- No route changes, no business logic changes, no styling system changes beyond what's described.
+- Auth state, admin gating, and existing routes remain identical.
 
-## Validação
+## Technical notes
 
-Após aplicar:
-1. Paula recarrega a página, faz logout e login novamente com Google.
-2. Confirmar que cai direto em `/` (e não em `/onboarding`).
-3. Confirmar que o botão **Importar** volta a aparecer no header (via `has_role` RPC).
-4. Ler os server logs para confirmar qual hipótese estava ativa e, se for a #1, manter a correção da race; se for #2, tratar o erro real.
+- All icons from `lucide-react` (already a dep).
+- Uses Tailwind responsive prefixes only; no JS breakpoint hook needed (avoids SSR hydration mismatch from `useIsMobile`).
+- `activeProps` on `<Link>` with `activeOptions={{ exact: true }}` for `/` so it doesn't stay active on `/meses`.

@@ -10,28 +10,9 @@ export function OnboardingGate() {
   useEffect(() => {
     let cancelled = false;
 
-    async function waitForSession(timeoutMs = 5000) {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) return data.session;
-
-      return await new Promise<typeof data.session>((resolve) => {
-        const timer = setTimeout(() => {
-          sub.data.subscription.unsubscribe();
-          resolve(null);
-        }, timeoutMs);
-
-        const sub = supabase.auth.onAuthStateChange((_event, session) => {
-          if (session?.access_token) {
-            clearTimeout(timer);
-            sub.data.subscription.unsubscribe();
-            resolve(session);
-          }
-        });
-      });
-    }
-
     async function check() {
-      const session = await waitForSession();
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
       if (!session) return;
       const path = window.location.pathname;
       if (ALLOWED_PATHS.includes(path)) return;
@@ -45,16 +26,14 @@ export function OnboardingGate() {
         if (!profile?.onboarded_at) {
           router.navigate({ to: "/onboarding" });
         }
-      } catch (error) {
-        console.error("[onboarding-gate] falha ao consultar perfil:", error);
+      } catch {
+        // ignore
       }
     }
 
     check();
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
-        if (session?.access_token) check();
-      }
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") check();
     });
     return () => {
       cancelled = true;
