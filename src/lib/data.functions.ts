@@ -208,7 +208,7 @@ export const listAthletes = createServerFn({ method: "GET" }).handler(async () =
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("athletes")
-    .select("id, full_name, profile_picture_url")
+    .select("id, full_name, profile_picture_url, display_mode, public_nickname, show_google_photo, google_photo_url")
     .order("full_name");
   if (error) throw new Error(error.message);
   return data ?? [];
