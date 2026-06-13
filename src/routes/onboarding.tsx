@@ -49,23 +49,67 @@ function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+
+    async function waitForSession(timeoutMs = 5000) {
       const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+      if (data.session?.access_token) return data.session;
+      return await new Promise<typeof data.session>((resolve) => {
+        const timer = setTimeout(() => {
+          sub.subscription.unsubscribe();
+          resolve(null);
+        }, timeoutMs);
+        const sub = supabase.auth.onAuthStateChange((_e, session) => {
+          if (session?.access_token) {
+            clearTimeout(timer);
+            sub.subscription.unsubscribe();
+            resolve(session);
+          }
+        });
+      });
+    }
+
+    (async () => {
+      const session = await waitForSession();
+      if (cancelled) return;
+      if (!session) {
         router.navigate({ to: "/auth" });
         return;
       }
+
+      // Primary: ask the server fn (RLS-aware, authoritative).
       try {
         const s = await stateCall();
+        if (cancelled) return;
         if (s.onboarded) {
           router.navigate({ to: "/" });
           return;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.error("[onboarding] getMyOnboardingState falhou:", err);
+        // Fallback: consulta direta ao próprio profile via RLS.
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("onboarded_at")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          if (cancelled) return;
+          if (profile?.onboarded_at) {
+            router.navigate({ to: "/" });
+            return;
+          }
+        } catch (fallbackErr) {
+          console.error("[onboarding] fallback profile read falhou:", fallbackErr);
+          toast.error("Não foi possível verificar seu cadastro. Recarregue a página.");
+        }
       }
-      setChecking(false);
+      if (!cancelled) setChecking(false);
     })();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
