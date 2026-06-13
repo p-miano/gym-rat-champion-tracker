@@ -79,9 +79,10 @@ export const AWARD_META: Record<
   },
   influencer: {
     emoji: "📣",
-    title: "Influencer",
+    title: "Topa tudo por biscoito",
     short: "Mais reações recebidas nos check-ins.",
   },
+
 
   bodybuilding_beast: {
     emoji: "💪",
@@ -120,7 +121,7 @@ export const AWARD_META: Record<
   },
   early_bird: {
     emoji: "🌅",
-    title: "Madrugador (Psicopata das 5h)",
+    title: "Psicopata das 5h",
     short: "Mais treinos antes das 7h.",
   },
   night_owl: {
