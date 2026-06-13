@@ -4,14 +4,22 @@ import { Dumbbell, LogIn, LogOut, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-const ADMIN_EMAIL = "paulamiano@gmail.com";
-
 export function SiteHeader() {
-  const [email, setEmail] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setEmail(s?.user.email ?? null));
+    async function refresh(userId: string | null) {
+      setSignedIn(!!userId);
+      if (!userId) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+      setIsAdmin(!!data);
+    }
+    supabase.auth.getSession().then(({ data }) => refresh(data.session?.user.id ?? null));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => refresh(s?.user.id ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -19,8 +27,6 @@ export function SiteHeader() {
     await supabase.auth.signOut();
     window.location.href = "/";
   }
-
-  const isAdmin = email?.toLowerCase() === ADMIN_EMAIL;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
@@ -42,7 +48,7 @@ export function SiteHeader() {
           <NavLink to="/atletas">Atletas</NavLink>
         </nav>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {email ? (
+          {signedIn ? (
             <>
               {isAdmin && (
                 <Link to="/importar">
