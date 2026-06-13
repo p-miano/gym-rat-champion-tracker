@@ -1,46 +1,19 @@
 // Public-visitor anonymization layer.
 // Maps each athlete deterministically to a placeholder Brazilian name when the
-// viewer is not authenticated AND the athlete hasn't opted into a more open
-// display mode.
+// viewer is not authenticated AND the athlete hasn't opted into showing
+// their real (Gym Rats) name.
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const PLACEHOLDER_NAMES = [
-  "Lucas",
-  "Maria",
-  "Gabriel",
-  "Ana",
-  "Matheus",
-  "Julia",
-  "Felipe",
-  "Yasmin",
-  "Guilherme",
-  "Vitória",
-  "Rafael",
-  "Larissa",
-  "Daniel",
-  "Bruna",
-  "Gustavo",
-  "Camila",
-  "Pedro",
-  "Letícia",
-  "João",
-  "Jéssica",
-  "Thiago",
-  "Carolina",
-  "Leonardo",
-  "Mariana",
-  "Bruno",
-  "Amanda",
-  "Vinícius",
-  "Beatriz",
-  "Rodrigo",
+  "Lucas", "Maria", "Gabriel", "Ana", "Matheus", "Julia", "Felipe", "Yasmin",
+  "Guilherme", "Vitória", "Rafael", "Larissa", "Daniel", "Bruna", "Gustavo",
+  "Camila", "Pedro", "Letícia", "João", "Jéssica", "Thiago", "Carolina",
+  "Leonardo", "Mariana", "Bruno", "Amanda", "Vinícius", "Beatriz", "Rodrigo",
   "Isabela",
 ];
 
-
-// Lightweight color palette for initials avatars (HSL hues stable per id).
 function hashStr(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
@@ -62,7 +35,6 @@ export type AthleteLike = {
   full_name?: string | null;
   profile_picture_url?: string | null;
   display_mode?: string | null;
-  public_nickname?: string | null;
   show_google_photo?: boolean | null;
   google_photo_url?: string | null;
 } | null | undefined;
@@ -81,18 +53,12 @@ export function displayAthlete(athlete: AthleteLike, isAuthed: boolean): Display
   const realPhoto = athlete?.profile_picture_url ?? null;
 
   if (isAuthed) {
-    // Members always see the official GymRats photo (override Google avatar)
-    const mode = athlete?.display_mode ?? "placeholder";
-    if (mode === "nickname" && athlete?.public_nickname) {
-      return { name: athlete.public_nickname, photoUrl: realPhoto, forceInitials: false };
-    }
+    // Members always see the official GymRats name and photo.
     return { name: realName, photoUrl: realPhoto, forceInitials: false };
   }
 
-
-  // Public visitor: honor athlete's preferences.
-  // IMPORTANT: never display the Google account photo. When the athlete opts
-  // into showing a public photo, always use the official Gym Rats picture.
+  // Public visitor: only two modes — 'real' (opted-in) or 'placeholder' (default).
+  // Never display the Google account photo; use the official Gym Rats picture.
   const mode = athlete?.display_mode ?? "placeholder";
   if (mode === "real") {
     const photo = athlete?.show_google_photo ? realPhoto : null;
@@ -103,16 +69,7 @@ export function displayAthlete(athlete: AthleteLike, isAuthed: boolean): Display
       initialsColor: photo ? undefined : placeholderColorFor(id),
     };
   }
-  if (mode === "nickname" && athlete?.public_nickname) {
-    const photo = athlete?.show_google_photo ? realPhoto : null;
-    return {
-      name: athlete.public_nickname,
-      photoUrl: photo,
-      forceInitials: !photo,
-      initialsColor: photo ? undefined : placeholderColorFor(id),
-    };
-  }
-  // placeholder default
+  // placeholder (default)
   return {
     name: placeholderNameFor(id),
     photoUrl: null,
