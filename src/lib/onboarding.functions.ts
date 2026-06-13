@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const DisplayMode = z.enum(["placeholder", "nickname", "real"]);
+const DisplayMode = z.enum(["placeholder", "real"]);
 
 export const getMyOnboardingState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -64,7 +64,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         group_code: z.string().trim().min(1).max(32),
         athlete_id: z.string().uuid(),
         display_mode: DisplayMode,
-        public_nickname: z.string().trim().max(60).optional().nullable(),
         show_google_photo: z.boolean(),
       })
       .parse(d),
@@ -111,10 +110,9 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .update({
         claimed_by_user_id: context.userId,
         display_mode: data.display_mode,
-        public_nickname: data.public_nickname ?? null,
         show_google_photo: data.show_google_photo,
         google_photo_url: googlePhoto,
-      })
+      } as any)
       .eq("id", data.athlete_id);
     if (athErr) throw new Error(athErr.message);
 

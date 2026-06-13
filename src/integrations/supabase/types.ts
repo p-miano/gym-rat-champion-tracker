@@ -56,7 +56,6 @@ export type Database = {
           gymrats_id: number
           id: string
           profile_picture_url: string | null
-          public_nickname: string | null
           show_google_photo: boolean
         }
         Insert: {
@@ -68,7 +67,6 @@ export type Database = {
           gymrats_id: number
           id?: string
           profile_picture_url?: string | null
-          public_nickname?: string | null
           show_google_photo?: boolean
         }
         Update: {
@@ -80,7 +78,6 @@ export type Database = {
           gymrats_id?: number
           id?: string
           profile_picture_url?: string | null
-          public_nickname?: string | null
           show_google_photo?: boolean
         }
         Relationships: []

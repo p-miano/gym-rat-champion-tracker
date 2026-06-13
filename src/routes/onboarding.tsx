@@ -43,8 +43,7 @@ function OnboardingPage() {
   const [validating, setValidating] = useState(false);
 
   const [athleteId, setAthleteId] = useState<string>("");
-  const [displayMode, setDisplayMode] = useState<"placeholder" | "nickname" | "real">("placeholder");
-  const [nickname, setNickname] = useState("");
+  const [displayMode, setDisplayMode] = useState<"placeholder" | "real">("placeholder");
   const [showPhoto, setShowPhoto] = useState<"yes" | "no">("no");
   const [submitting, setSubmitting] = useState(false);
 
@@ -90,10 +89,6 @@ function OnboardingPage() {
       toast.error("Selecione o seu nome de atleta.");
       return;
     }
-    if (displayMode === "nickname" && !nickname.trim()) {
-      toast.error("Informe um apelido personalizado.");
-      return;
-    }
     setSubmitting(true);
     try {
       await completeCall({
@@ -101,7 +96,6 @@ function OnboardingPage() {
           group_code: code,
           athlete_id: athleteId,
           display_mode: displayMode,
-          public_nickname: displayMode === "nickname" ? nickname.trim() : null,
           show_google_photo: showPhoto === "yes",
         },
       });
@@ -174,33 +168,21 @@ function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Como você deseja aparecer para visitantes públicos?</Label>
+                <Label>Modo de Exibição Pública</Label>
                 <RadioGroup
                   value={displayMode}
-                  onValueChange={(v) => setDisplayMode(v as any)}
+                  onValueChange={(v) => setDisplayMode(v as "placeholder" | "real")}
                   className="space-y-2"
                 >
                   <label className="flex items-center gap-2">
                     <RadioGroupItem value="placeholder" id="dm-p" />
-                    <span>Manter nome fictício aleatório</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <RadioGroupItem value="nickname" id="dm-n" />
-                    <span>Usar um apelido personalizado</span>
+                    <span>Manter Anônimo (exibe o nome aleatório gerado pelo app)</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <RadioGroupItem value="real" id="dm-r" />
-                    <span>Mostrar meu nome real</span>
+                    <span>Exibir Nome Real (exibe o nome oficial do Gym Rats)</span>
                   </label>
                 </RadioGroup>
-                {displayMode === "nickname" && (
-                  <Input
-                    placeholder="Seu apelido"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    maxLength={60}
-                  />
-                )}
               </div>
 
               <div className="space-y-2">
