@@ -24,14 +24,14 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
+      <div className="container mx-auto grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 sm:flex sm:justify-between">
+        <Link to="/" className="flex min-w-0 items-center gap-2">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <div className="leading-tight">
-            <div className="display text-lg text-lime">Atletas com Dorflex</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div className="min-w-0 leading-tight">
+            <div className="display truncate text-base text-lime md:text-lg">Atletas com Dorflex</div>
+            <div className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:block">
               placar · temporada 2026 / 2027
             </div>
           </div>
@@ -41,13 +41,14 @@ export function SiteHeader() {
           <NavLink to="/meses">Meses</NavLink>
           <NavLink to="/atletas">Atletas</NavLink>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {email ? (
             <>
               {isAdmin && (
                 <Link to="/importar">
                   <Button size="sm" variant="secondary" className="gap-2">
-                    <Upload className="h-4 w-4" /> Importar
+                    <Upload className="h-4 w-4" />
+                    <span className="hidden sm:inline">Importar</span>
                   </Button>
                 </Link>
               )}

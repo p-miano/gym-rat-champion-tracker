@@ -130,9 +130,10 @@ function RootComponent() {
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
         <OnboardingGate />
-        <main className="container mx-auto px-4 py-6 md:py-10">
+        <main className="container mx-auto px-4 pt-6 pb-24 md:py-10">
           <Outlet />
         </main>
+        <BottomNav />
       </div>
     </QueryClientProvider>
   );
