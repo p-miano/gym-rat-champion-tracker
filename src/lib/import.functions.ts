@@ -178,26 +178,13 @@ export const importMonth = createServerFn({ method: "POST" })
       }
     }
 
-    // Recompute month_results
-    await supabaseAdmin.from("month_results").delete().eq("month_id", monthRow.id);
-    const athleteIds = [...idMap.values()];
-    const results = rankingFromCheckIns(
-      athleteIds,
-      ciRows.map((r) => ({
-        athlete_id: r.athlete_id,
-        occurred_at: r.occurred_at,
-        is_valid: r.is_valid,
-        duration_min: r.duration_min,
-        distance_km: r.distance_km,
-      })),
-    ).map((r) => ({ ...r, month_id: monthRow.id }));
-    if (results.length) {
-      const { error } = await supabaseAdmin.from("month_results").insert(results);
-      if (error) throw new Error(error.message);
-    }
+    // Recompute month_results for ALL months of the year using the union roster
+    // (any athlete that appeared in any month of this year OR was just imported).
+    await recomputeYearResults(supabaseAdmin, parsed.year, [...idMap.values()]);
 
     // Recompute awards for the year
     await recomputeAwardsForYear(supabaseAdmin, parsed.year);
+
 
     return {
       month_id: monthRow.id,
@@ -237,15 +224,61 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   }
 }
 
+async function recomputeYearResults(admin: any, year: number, extraAthleteIds: string[] = []) {
+  const { data: months } = await admin.from("months").select("id").eq("year", year);
+  const monthIds = (months ?? []).map((m: any) => m.id as string);
+  if (!monthIds.length) return;
+
+  // Union roster: any athlete with results in any month of the year + extras just imported
+  const { data: existingResults } = await admin
+    .from("month_results")
+    .select("athlete_id")
+    .in("month_id", monthIds);
+  const rosterSet = new Set<string>(extraAthleteIds);
+  for (const r of existingResults ?? []) rosterSet.add(r.athlete_id as string);
+  const roster = [...rosterSet];
+  if (!roster.length) return;
+
+  const { data: allCheckIns } = await admin
+    .from("check_ins")
+    .select("month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km")
+    .in("month_id", monthIds);
+
+  const byMonth = new Map<string, any[]>();
+  for (const mid of monthIds) byMonth.set(mid, []);
+  for (const c of allCheckIns ?? []) {
+    byMonth.get(c.month_id as string)?.push(c);
+  }
+
+  await admin.from("month_results").delete().in("month_id", monthIds);
+  const allRows: any[] = [];
+  for (const mid of monthIds) {
+    const rows = rankingFromCheckIns(roster, byMonth.get(mid) ?? []).map((r) => ({
+      ...r,
+      month_id: mid,
+    }));
+    allRows.push(...rows);
+  }
+  if (allRows.length) {
+    const chunk = 500;
+    for (let i = 0; i < allRows.length; i += chunk) {
+      const { error } = await admin.from("month_results").insert(allRows.slice(i, i + chunk));
+      if (error) throw new Error(error.message);
+    }
+  }
+}
+
 export const recomputeAwards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { year: number }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await recomputeYearResults(supabaseAdmin, data.year);
     await recomputeAwardsForYear(supabaseAdmin, data.year);
     return { ok: true, year: data.year };
   });
+
 
 export const deleteMonth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -256,6 +289,9 @@ export const deleteMonth = createServerFn({ method: "POST" })
     const { data: month } = await supabaseAdmin.from("months").select("year").eq("id", data.month_id).single();
     const { error } = await supabaseAdmin.from("months").delete().eq("id", data.month_id);
     if (error) throw new Error(error.message);
-    if (month?.year) await recomputeAwardsForYear(supabaseAdmin, month.year);
+    if (month?.year) {
+      await recomputeYearResults(supabaseAdmin, month.year);
+      await recomputeAwardsForYear(supabaseAdmin, month.year);
+    }
     return { ok: true };
   });
