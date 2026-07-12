@@ -274,9 +274,11 @@ export const recomputeAwards = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await recomputeYearResults(supabaseAdmin, data.year);
     await recomputeAwardsForYear(supabaseAdmin, data.year);
     return { ok: true, year: data.year };
   });
+
 
 export const deleteMonth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
