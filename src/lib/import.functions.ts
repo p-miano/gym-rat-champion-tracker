@@ -224,6 +224,50 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   }
 }
 
+async function recomputeYearResults(admin: any, year: number, extraAthleteIds: string[] = []) {
+  const { data: months } = await admin.from("months").select("id").eq("year", year);
+  const monthIds = (months ?? []).map((m: any) => m.id as string);
+  if (!monthIds.length) return;
+
+  // Union roster: any athlete with results in any month of the year + extras just imported
+  const { data: existingResults } = await admin
+    .from("month_results")
+    .select("athlete_id")
+    .in("month_id", monthIds);
+  const rosterSet = new Set<string>(extraAthleteIds);
+  for (const r of existingResults ?? []) rosterSet.add(r.athlete_id as string);
+  const roster = [...rosterSet];
+  if (!roster.length) return;
+
+  const { data: allCheckIns } = await admin
+    .from("check_ins")
+    .select("month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km")
+    .in("month_id", monthIds);
+
+  const byMonth = new Map<string, any[]>();
+  for (const mid of monthIds) byMonth.set(mid, []);
+  for (const c of allCheckIns ?? []) {
+    byMonth.get(c.month_id as string)?.push(c);
+  }
+
+  await admin.from("month_results").delete().in("month_id", monthIds);
+  const allRows: any[] = [];
+  for (const mid of monthIds) {
+    const rows = rankingFromCheckIns(roster, byMonth.get(mid) ?? []).map((r) => ({
+      ...r,
+      month_id: mid,
+    }));
+    allRows.push(...rows);
+  }
+  if (allRows.length) {
+    const chunk = 500;
+    for (let i = 0; i < allRows.length; i += chunk) {
+      const { error } = await admin.from("month_results").insert(allRows.slice(i, i + chunk));
+      if (error) throw new Error(error.message);
+    }
+  }
+}
+
 export const recomputeAwards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { year: number }) => d)
