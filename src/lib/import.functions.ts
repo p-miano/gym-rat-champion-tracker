@@ -178,26 +178,13 @@ export const importMonth = createServerFn({ method: "POST" })
       }
     }
 
-    // Recompute month_results
-    await supabaseAdmin.from("month_results").delete().eq("month_id", monthRow.id);
-    const athleteIds = [...idMap.values()];
-    const results = rankingFromCheckIns(
-      athleteIds,
-      ciRows.map((r) => ({
-        athlete_id: r.athlete_id,
-        occurred_at: r.occurred_at,
-        is_valid: r.is_valid,
-        duration_min: r.duration_min,
-        distance_km: r.distance_km,
-      })),
-    ).map((r) => ({ ...r, month_id: monthRow.id }));
-    if (results.length) {
-      const { error } = await supabaseAdmin.from("month_results").insert(results);
-      if (error) throw new Error(error.message);
-    }
+    // Recompute month_results for ALL months of the year using the union roster
+    // (any athlete that appeared in any month of this year OR was just imported).
+    await recomputeYearResults(supabaseAdmin, parsed.year, [...idMap.values()]);
 
     // Recompute awards for the year
     await recomputeAwardsForYear(supabaseAdmin, parsed.year);
+
 
     return {
       month_id: monthRow.id,
