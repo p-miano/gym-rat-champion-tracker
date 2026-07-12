@@ -289,6 +289,9 @@ export const deleteMonth = createServerFn({ method: "POST" })
     const { data: month } = await supabaseAdmin.from("months").select("year").eq("id", data.month_id).single();
     const { error } = await supabaseAdmin.from("months").delete().eq("id", data.month_id);
     if (error) throw new Error(error.message);
-    if (month?.year) await recomputeAwardsForYear(supabaseAdmin, month.year);
+    if (month?.year) {
+      await recomputeYearResults(supabaseAdmin, month.year);
+      await recomputeAwardsForYear(supabaseAdmin, month.year);
+    }
     return { ok: true };
   });
