@@ -1,43 +1,25 @@
-# Mobile Navigation Fix
+# Roster contínuo da temporada
 
-Add a sticky bottom tab bar for mobile while keeping the existing top navbar for desktop, and tighten the header so it doesn't crowd on small screens.
+## Problema
+Hoje `month_results` só contém atletas presentes naquele mês (vem de `parsed.members` do export do GymRats). Quem não entra num mês some do ranking em vez de aparecer com 0 check-ins e disputar a lanterna.
 
-## 1. New component: `src/components/bottom-nav.tsx`
+## Solução
+Ao (re)calcular `month_results`, usar como roster a **união de todos os atletas com resultado em qualquer mês do mesmo ano** — não apenas os membros presentes no export daquele mês. Ausentes recebem `active_days=0`, `total_checkins=0`, `total_minutes=0`, `total_distance_km=0` e entram normalmente no cálculo de rank/winner/last (empate no mínimo mantém múltiplas lanternas, como hoje).
 
-A fixed bottom tab bar, mobile-only (`md:hidden`), rendered once at the layout level.
+## Mudanças
 
-- Container: `fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur md:hidden` with `pb-[env(safe-area-inset-bottom)]`.
-- Grid of equal-width tabs (`grid grid-cols-3`), each a TanStack `<Link>` with `activeProps` highlighting (text-foreground + primary indicator), inactive items use `text-muted-foreground`.
-- Tabs (matching current top nav):
-  - `/` — Trophy icon — "Placar"
-  - `/meses` — Calendar icon — "Meses"
-  - `/atletas` — Users icon — "Atletas"
-- Each tab: vertical stack, 20px icon above 11px label, ~56px tall tap target.
+### 1. `src/lib/import.functions.ts`
+- Em `importMonth.handler`, depois de fazer upsert do mês/atletas/check-ins do export atual, buscar o **roster do ano**: união de `athletes.id` presentes em `month_results` de qualquer mês do mesmo `parsed.year` **mais** os `idMap.values()` recém-importados.
+- Passar esse roster expandido para `rankingFromCheckIns` em vez de só `[...idMap.values()]`. `rankingFromCheckIns` já trata atletas sem check-ins como 0 (o `Set` fica vazio), então a função em si não muda.
+- **Recomputar `month_results` dos outros meses do ano** para incluir os atletas novos que entraram agora. Fluxo: para cada `month_id` do ano, apagar `month_results`, buscar `check_ins` daquele mês, rodar `rankingFromCheckIns(rosterDoAno, checkIns)`, reinserir. Fazer isso antes do `recomputeAwardsForYear`.
 
-Admin-only "Importar" stays in the header (not a primary public route, so it doesn't belong in the bottom bar).
+### 2. Nenhuma mudança de schema
+As tabelas já suportam linhas com zeros. `month_results` tem PK/uniq por `(month_id, athlete_id)` que continua válida.
 
-## 2. `src/components/site-header.tsx` tweaks
+### 3. Nenhuma mudança de UI/leitura
+`listMonths`, `getMonth`, `getAnnualStanding` já leem tudo de `month_results` — vão passar a mostrar os ausentes com 0 automaticamente, inclusive na lanterna.
 
-- Hide desktop nav links on mobile (already `hidden md:flex` — keep).
-- Shrink the brand block on mobile so it doesn't wrap or clip:
-  - Wrap title row in `min-w-0` containers; add `truncate` on the title.
-  - Reduce title size on mobile: `text-base md:text-lg`.
-  - Hide the "placar · temporada…" subtitle on mobile (`hidden sm:block`) — that's the line that pushes the header wide.
-- Right cluster: keep `Importar` button visible to admin on mobile but use `size="sm"` and hide its text label on very small widths (icon-only via `<span className="hidden xs:inline">Importar</span>` → use `sm:inline`), so admin still sees an upload icon button.
-- Apply the responsive header pattern: outer row `grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-between`, brand link gets `min-w-0`, logo square gets `shrink-0`.
-
-## 3. `src/routes/__root.tsx` layout wrapper
-
-- Import and render `<BottomNav />` inside `RootComponent`, after `<main>`.
-- Add bottom padding to `<main>` on mobile so content isn't hidden behind the bar: `pb-20 md:pb-10`.
-
-## Out of scope
-
-- No route changes, no business logic changes, no styling system changes beyond what's described.
-- Auth state, admin gating, and existing routes remain identical.
-
-## Technical notes
-
-- All icons from `lucide-react` (already a dep).
-- Uses Tailwind responsive prefixes only; no JS breakpoint hook needed (avoids SSR hydration mismatch from `useIsMobile`).
-- `activeProps` on `<Link>` with `activeOptions={{ exact: true }}` for `/` so it doesn't stay active on `/meses`.
+## Efeito
+- Import de qualquer mês passa a sincronizar o roster de todos os meses do ano.
+- Atleta que aparece pela primeira vez no mês 5 retroage com 0 nos meses 1–4 (contando como lanterna se aplicável).
+- Regra de empate na lanterna preservada: se vários zerarem, todos são `is_last`.
