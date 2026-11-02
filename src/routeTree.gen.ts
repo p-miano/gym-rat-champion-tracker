@@ -9,23 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as ImportarRouteImport } from './routes/importar'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MesesIndexRouteImport } from './routes/meses.index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AtletasIndexRouteImport } from './routes/atletas.index'
-import { Route as MesesIdRouteImport } from './routes/meses.$id'
 import { Route as AtletasIdRouteImport } from './routes/atletas.$id'
+import { Route as MesesIndexRouteImport } from './routes/meses.index'
+import { Route as MesesIdRouteImport } from './routes/meses.$id'
 
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImportarRoute = ImportarRouteImport.update({
-  id: '/importar',
-  path: '/importar',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -33,14 +28,14 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ImportarRoute = ImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MesesIndexRoute = MesesIndexRouteImport.update({
-  id: '/meses/',
-  path: '/meses/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtletasIndexRoute = AtletasIndexRouteImport.update({
@@ -48,14 +43,19 @@ const AtletasIndexRoute = AtletasIndexRouteImport.update({
   path: '/atletas/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MesesIdRoute = MesesIdRouteImport.update({
-  id: '/meses/$id',
-  path: '/meses/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AtletasIdRoute = AtletasIdRouteImport.update({
   id: '/atletas/$id',
   path: '/atletas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MesesIndexRoute = MesesIndexRouteImport.update({
+  id: '/meses/',
+  path: '/meses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MesesIdRoute = MesesIdRouteImport.update({
+  id: '/meses/$id',
+  path: '/meses/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -136,18 +136,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/importar': {
-      id: '/importar'
-      path: '/importar'
-      fullPath: '/importar'
-      preLoaderRoute: typeof ImportarRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -157,18 +150,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/importar': {
+      id: '/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof ImportarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/meses/': {
-      id: '/meses/'
-      path: '/meses'
-      fullPath: '/meses/'
-      preLoaderRoute: typeof MesesIndexRouteImport
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/atletas/': {
@@ -178,18 +171,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtletasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/meses/$id': {
-      id: '/meses/$id'
-      path: '/meses/$id'
-      fullPath: '/meses/$id'
-      preLoaderRoute: typeof MesesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/atletas/$id': {
       id: '/atletas/$id'
       path: '/atletas/$id'
       fullPath: '/atletas/$id'
       preLoaderRoute: typeof AtletasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meses/': {
+      id: '/meses/'
+      path: '/meses'
+      fullPath: '/meses/'
+      preLoaderRoute: typeof MesesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meses/$id': {
+      id: '/meses/$id'
+      path: '/meses/$id'
+      fullPath: '/meses/$id'
+      preLoaderRoute: typeof MesesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
