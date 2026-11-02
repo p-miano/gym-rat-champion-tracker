@@ -9,6 +9,23 @@ import {
 } from "./gymrats-parser";
 import { computeAwards, type AwardCheckIn } from "./awards";
 
+async function fetchCheckInsPaged(admin: any, columns: string, monthIds: string[]) {
+  const page = 1000;
+  const out: any[] = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await admin
+      .from("check_ins")
+      .select(columns)
+      .in("month_id", monthIds)
+      .order("id", { ascending: true })
+      .range(from, from + page - 1);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < page) break;
+  }
+  return out;
+}
+
 function assertAdmin(supabase: any, userId: string) {
   return supabase
     .rpc("has_role", { _user_id: userId, _role: "admin" })
