@@ -218,12 +218,11 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   const monthIds = (months ?? []).map((m: any) => m.id);
   if (!monthIds.length) return;
 
-  const { data: checkIns } = await admin
-    .from("check_ins")
-    .select(
-      "athlete_id, occurred_at, is_valid, distance_km, duration_min, activity_type, title, description, location_latitude, location_longitude, reactions, raw",
-    )
-    .in("month_id", monthIds);
+  const checkIns = await fetchCheckInsPaged(
+    admin,
+    "athlete_id, occurred_at, is_valid, distance_km, duration_min, activity_type, title, description, location_latitude, location_longitude, reactions, raw",
+    monthIds,
+  );
 
   const awards = computeAwards((checkIns ?? []) as AwardCheckIn[]);
   await admin.from("annual_awards").delete().eq("year", year);
@@ -256,10 +255,11 @@ async function recomputeYearResults(admin: any, year: number, extraAthleteIds: s
   const roster = [...rosterSet];
   if (!roster.length) return;
 
-  const { data: allCheckIns } = await admin
-    .from("check_ins")
-    .select("month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km")
-    .in("month_id", monthIds);
+  const allCheckIns = await fetchCheckInsPaged(
+    admin,
+    "month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km",
+    monthIds,
+  );
 
   const byMonth = new Map<string, any[]>();
   for (const mid of monthIds) byMonth.set(mid, []);
