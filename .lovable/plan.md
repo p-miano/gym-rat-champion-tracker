@@ -1,25 +1,15 @@
-# Roster contínuo da temporada
+# Corrigir contagem incompleta de treinos (limite de 1000 linhas)
 
-## Problema
-Hoje `month_results` só contém atletas presentes naquele mês (vem de `parsed.members` do export do GymRats). Quem não entra num mês some do ranking em vez de aparecer com 0 check-ins e disputar a lanterna.
+## Diagnóstico (confirmado)
+- O arquivo de outubro tem 31 check-ins da Paula, e os 31 foram salvos no banco.
+- O placar mostra 30 porque, ao recalcular o ranking do ano, o app busca todos os check-ins de 2026 de uma vez só. O banco devolve no máximo 1000 linhas por consulta, e 2026 já tem 1004. Os 4 últimos ficam de fora — um deles é o treino da Paula em 31/10.
+- O mesmo limite afeta o cálculo das conquistas do ano e vai piorar a cada mês importado.
 
-## Solução
-Ao (re)calcular `month_results`, usar como roster a **união de todos os atletas com resultado em qualquer mês do mesmo ano** — não apenas os membros presentes no export daquele mês. Ausentes recebem `active_days=0`, `total_checkins=0`, `total_minutes=0`, `total_distance_km=0` e entram normalmente no cálculo de rank/winner/last (empate no mínimo mantém múltiplas lanternas, como hoje).
+## Correção
+1. Criar um utilitário que busca os check-ins em páginas de 1000 até acabar.
+2. Usá-lo em `recomputeYearResults` (ranking mensal) e em `recomputeAwardsForYear` (conquistas) em `src/lib/import.functions.ts`.
+3. Verificar outras leituras de check-ins em `src/lib/data.functions.ts` que possam passar de 1000 linhas e aplicar a mesma paginação.
+4. Depois disso, clicar em "Recalcular 2026" em Importar para corrigir os meses já salvos (não precisa reimportar).
 
-## Mudanças
-
-### 1. `src/lib/import.functions.ts`
-- Em `importMonth.handler`, depois de fazer upsert do mês/atletas/check-ins do export atual, buscar o **roster do ano**: união de `athletes.id` presentes em `month_results` de qualquer mês do mesmo `parsed.year` **mais** os `idMap.values()` recém-importados.
-- Passar esse roster expandido para `rankingFromCheckIns` em vez de só `[...idMap.values()]`. `rankingFromCheckIns` já trata atletas sem check-ins como 0 (o `Set` fica vazio), então a função em si não muda.
-- **Recomputar `month_results` dos outros meses do ano** para incluir os atletas novos que entraram agora. Fluxo: para cada `month_id` do ano, apagar `month_results`, buscar `check_ins` daquele mês, rodar `rankingFromCheckIns(rosterDoAno, checkIns)`, reinserir. Fazer isso antes do `recomputeAwardsForYear`.
-
-### 2. Nenhuma mudança de schema
-As tabelas já suportam linhas com zeros. `month_results` tem PK/uniq por `(month_id, athlete_id)` que continua válida.
-
-### 3. Nenhuma mudança de UI/leitura
-`listMonths`, `getMonth`, `getAnnualStanding` já leem tudo de `month_results` — vão passar a mostrar os ausentes com 0 automaticamente, inclusive na lanterna.
-
-## Efeito
-- Import de qualquer mês passa a sincronizar o roster de todos os meses do ano.
-- Atleta que aparece pela primeira vez no mês 5 retroage com 0 nos meses 1–4 (contando como lanterna se aplicável).
-- Regra de empate na lanterna preservada: se vários zerarem, todos são `is_last`.
+## Verificação
+- Confirmar no banco que a Paula fica com 31 dias ativos em outubro e que os outros meses não mudaram de forma inesperada.
