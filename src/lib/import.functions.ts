@@ -9,6 +9,23 @@ import {
 } from "./gymrats-parser";
 import { computeAwards, type AwardCheckIn } from "./awards";
 
+async function fetchCheckInsPaged(admin: any, columns: string, monthIds: string[]) {
+  const page = 1000;
+  const out: any[] = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await admin
+      .from("check_ins")
+      .select(columns)
+      .in("month_id", monthIds)
+      .order("id", { ascending: true })
+      .range(from, from + page - 1);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < page) break;
+  }
+  return out;
+}
+
 function assertAdmin(supabase: any, userId: string) {
   return supabase
     .rpc("has_role", { _user_id: userId, _role: "admin" })
@@ -201,12 +218,11 @@ async function recomputeAwardsForYear(admin: any, year: number) {
   const monthIds = (months ?? []).map((m: any) => m.id);
   if (!monthIds.length) return;
 
-  const { data: checkIns } = await admin
-    .from("check_ins")
-    .select(
-      "athlete_id, occurred_at, is_valid, distance_km, duration_min, activity_type, title, description, location_latitude, location_longitude, reactions, raw",
-    )
-    .in("month_id", monthIds);
+  const checkIns = await fetchCheckInsPaged(
+    admin,
+    "athlete_id, occurred_at, is_valid, distance_km, duration_min, activity_type, title, description, location_latitude, location_longitude, reactions, raw",
+    monthIds,
+  );
 
   const awards = computeAwards((checkIns ?? []) as AwardCheckIn[]);
   await admin.from("annual_awards").delete().eq("year", year);
@@ -239,10 +255,11 @@ async function recomputeYearResults(admin: any, year: number, extraAthleteIds: s
   const roster = [...rosterSet];
   if (!roster.length) return;
 
-  const { data: allCheckIns } = await admin
-    .from("check_ins")
-    .select("month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km")
-    .in("month_id", monthIds);
+  const allCheckIns = await fetchCheckInsPaged(
+    admin,
+    "month_id, athlete_id, occurred_at, is_valid, duration_min, distance_km",
+    monthIds,
+  );
 
   const byMonth = new Map<string, any[]>();
   for (const mid of monthIds) byMonth.set(mid, []);
