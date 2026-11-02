@@ -78,10 +78,12 @@ function HomePage() {
           <Empty>Ninguém ganhou nada ainda. Importe um mês pra começar a humilhação.</Empty>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            {[1, 0, 2].map((order, i) => {
+            {[0, 1, 2].map((order, i) => {
               const g = podiumGroups[order];
-              if (!g) return <div key={i} />;
-              return <PodiumCard key={order} place={order + 1} wins={g.wins} athletes={g.athletes} />;
+              // Mobile: natural 1º, 2º, 3º order. Desktop: 2º-1º-3º podium shape.
+              const mdOrder = ["md:order-2", "md:order-1", "md:order-3"][order];
+              if (!g) return <div key={i} className={mdOrder} />;
+              return <PodiumCard key={order} place={order + 1} wins={g.wins} athletes={g.athletes} className={mdOrder} />;
             })}
           </div>
         )}
