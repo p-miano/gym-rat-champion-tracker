@@ -240,7 +240,7 @@ function SectionTitle({ icon, children }: { icon?: React.ReactNode; children: Re
   );
 }
 
-function PodiumCard({ place, wins, athletes }: { place: number; wins: number; athletes: any[] }) {
+function PodiumCard({ place, wins, athletes, className }: { place: number; wins: number; athletes: any[]; className?: string }) {
   const sizes = { 1: "md:scale-110 md:-translate-y-2", 2: "", 3: "" } as Record<number, string>;
   const colors = {
     1: "border-primary/60 bg-primary/10",
@@ -249,7 +249,7 @@ function PodiumCard({ place, wins, athletes }: { place: number; wins: number; at
   } as Record<number, string>;
   const medal = place === 1 ? "🥇" : place === 2 ? "🥈" : "🥉";
   return (
-    <div className={`border-2 p-6 text-center transition-all ${colors[place]} ${sizes[place] ?? ""}`}>
+    <div className={`border-2 p-6 text-center transition-all ${colors[place]} ${sizes[place] ?? ""} ${className ?? ""}`}>
       <div className="display text-6xl text-lime">{medal}</div>
       <div className="mt-4 flex flex-wrap items-end justify-center gap-4">
         {athletes.map((a) => (
